@@ -6,6 +6,7 @@ import { courses as coursesAPI }     from '../lib/api';
 import useAuthStore                  from '../store/auth.store';
 import { CourseCard }                from '../components/course/CourseCard';
 import { SkeletonCard, Button }      from '../components/ui';
+import { LOGO_FULL }                 from '../assets/logo';
 
 // ── Kenyan testimonials ───────────────────────────────────────
 const TESTIMONIALS = [
@@ -116,8 +117,18 @@ export default function HomePage() {
             {/* Left */}
             <div className="animate-fade-in">
               {/* Kenya-first badge */}
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-medium mb-5">
                 <span>🇰🇪</span> Built for Kenya's 42+ communities
+              </div>
+
+              {/* Real logo in hero */}
+              <div className="mb-5">
+                <img
+                  src={LOGO_FULL}
+                  alt="Stadi — Learn Skills. Start Earning."
+                  className="h-16 w-auto brightness-0 invert drop-shadow-lg"
+                  draggable={false}
+                />
               </div>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-4"

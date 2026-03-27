@@ -7,6 +7,7 @@ import {
 import useAuthStore from '../../store/auth.store';
 import useAppStore  from '../../store/app.store';
 import { Badge }    from '../ui';
+import { LOGO_NAV, LOGO_ICON } from '../../assets/logo';
 
 const LANGUAGES = [
   { code: 'english', label: 'English' },
@@ -62,11 +63,13 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 bg-stadi-green rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg" style={{ fontFamily: 'Playfair Display' }}>S</span>
-            </div>
-            <span className="font-bold text-stadi-green text-xl" style={{ fontFamily: 'Playfair Display' }}>Stadi</span>
+          <Link to="/" className="flex items-center shrink-0">
+            <img
+              src={LOGO_NAV}
+              alt="Stadi — Learn Skills. Start Earning."
+              className="h-9 w-auto"
+              draggable={false}
+            />
           </Link>
 
           {/* Desktop Nav */}
@@ -276,11 +279,13 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
         {/* Brand */}
         <div className="col-span-2 md:col-span-1">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-stadi-orange rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg" style={{ fontFamily: 'Playfair Display' }}>S</span>
-            </div>
-            <span className="font-bold text-xl" style={{ fontFamily: 'Playfair Display' }}>Stadi</span>
+          <div className="mb-4">
+            <img
+              src={LOGO_NAV}
+              alt="Stadi"
+              className="h-10 w-auto brightness-0 invert"
+              draggable={false}
+            />
           </div>
           <p className="text-sm text-gray-400 mb-4 leading-relaxed">
             Learn practical vocational skills. Start earning in Kenya. In your language.

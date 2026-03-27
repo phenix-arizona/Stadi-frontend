@@ -4,6 +4,7 @@ import { Modal, Button, Input } from '../ui';
 import useAuthStore from '../../store/auth.store';
 import useAppStore  from '../../store/app.store';
 import { auth as authAPI } from '../../lib/api';
+import { LOGO_ICON } from '../../assets/logo';
 
 const STEPS = { PHONE: 'phone', OTP: 'otp', NAME: 'name', SUCCESS: 'success' };
 
@@ -116,8 +117,13 @@ export default function AuthModal() {
       <div className="p-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-stadi-green-light rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-2xl font-bold text-stadi-green" style={{ fontFamily: 'Playfair Display' }}>S</span>
+          <div className="w-20 mx-auto mb-3">
+            <img
+              src={LOGO_ICON}
+              alt="Stadi"
+              className="w-20 h-20 rounded-2xl object-contain bg-stadi-green-light p-2"
+              draggable={false}
+            />
           </div>
           {step === STEPS.PHONE && (
             <>

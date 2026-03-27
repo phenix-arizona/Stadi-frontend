@@ -10,6 +10,7 @@ import { courses as coursesAPI, payments, bookmarks } from '../lib/api';
 import useAuthStore  from '../store/auth.store';
 import useAppStore   from '../store/app.store';
 import { Button, Badge, StarRating, ProgressBar, Skeleton } from '../components/ui';
+import { LOGO_FULL, LOGO_NAV } from '../assets/logo';
 
 export function CourseDetailPage() {
   const { slug }    = useParams();
@@ -368,6 +369,14 @@ export function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-14">
       <div className="text-center mb-12">
+        <div className="flex justify-center mb-5">
+          <img
+            src={LOGO_FULL}
+            alt="Stadi — Learn Skills. Start Earning."
+            className="h-14 w-auto"
+            draggable={false}
+          />
+        </div>
         <Badge variant="green" className="mb-4">🇰🇪 Made in Kenya, for Kenya</Badge>
         <h1 className="text-3xl font-bold text-stadi-dark mb-4" style={{ fontFamily: 'Playfair Display' }}>
           About Stadi
