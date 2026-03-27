@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port $PORT",
-    "start": "vite preview --host 0.0.0.0 --port $PORT",
+    "start": "serve -s dist -l $PORT",
     "lint": "eslint src/ --ext .jsx,.js"
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "react-i18next": "^14.0.1",
     "react-router-dom": "^6.21.3",
     "recharts": "^2.10.3",
+    "serve": "^14.2.1",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

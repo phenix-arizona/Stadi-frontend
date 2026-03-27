@@ -9,3 +9,8 @@
     "restartPolicyType": "ON_FAILURE"
   }
 }
+```
+
+**Step 3 — Make sure `VITE_API_URL` is set in Railway Variables BEFORE pushing:**
+```
+VITE_API_URL=https://stadi-backend-production.up.railway.app/api
