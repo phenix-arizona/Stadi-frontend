@@ -10,5 +10,13 @@ export default defineConfig({
     port: 5173,
     proxy: { '/api': { target: 'http://localhost:4000', changeOrigin: true } },
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    allowedHosts: [
+      'stadi-frontend-production.up.railway.app',
+      '.railway.app', // allows all railway subdomains
+    ],
+  },
   build: { outDir: 'dist', sourcemap: false, chunkSizeWarningLimit: 800 },
 });
