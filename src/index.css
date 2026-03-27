@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: #2D2D2D;
+    background-color: #FAFAFA;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3,h4 { font-family: 'DM Sans', sans-serif; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-stadi-green text-white font-semibold px-5 py-3 rounded-xl 
+           hover:bg-opacity-90 active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-stadi-orange text-white font-semibold px-5 py-3 rounded-xl
+           hover:bg-opacity-90 active:scale-95 transition-all duration-150;
+  }
+  .btn-outline {
+    @apply border-2 border-stadi-green text-stadi-green font-semibold px-5 py-3 rounded-xl
+           hover:bg-stadi-green-light active:scale-95 transition-all duration-150;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+  }
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 
+           focus:outline-none focus:ring-2 focus:ring-stadi-green focus:border-transparent
+           placeholder-gray-400 transition-all duration-150;
+  }
+  .badge-orange {
+    @apply inline-flex items-center gap-1 bg-stadi-orange-light text-stadi-orange 
+           text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .badge-green {
+    @apply inline-flex items-center gap-1 bg-stadi-green-light text-stadi-green 
+           text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .section-title {
+    @apply text-xl font-bold text-stadi-dark;
+  }
+  .page-header {
+    @apply text-2xl font-bold text-stadi-dark font-display;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 999px; }
+
+/* Progress bar animation */
+@keyframes progress { from { width: 0; } }
+.progress-animate { animation: progress 0.8s ease-out; }
