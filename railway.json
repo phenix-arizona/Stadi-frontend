@@ -5,12 +5,10 @@
     "buildCommand": "npm install && npm run build"
   },
   "deploy": {
-    "startCommand": "npm run start",
-    "restartPolicyType": "ON_FAILURE"
+    "startCommand": "npx serve -s dist -l $PORT --no-clipboard",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
   }
 }
-```
-
-**Step 3 — Make sure `VITE_API_URL` is set in Railway Variables BEFORE pushing:**
-```
-VITE_API_URL=https://stadi-backend-production.up.railway.app/api
