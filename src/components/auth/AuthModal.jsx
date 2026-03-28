@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Phone, Shield, ChevronRight, Loader2, CheckCircle } from 'lucide-react';
 import { Modal, Button, Input } from '../ui';
 import useAuthStore from '../../store/auth.store';
@@ -11,22 +12,23 @@ const STEPS = { PHONE: 'phone', OTP: 'otp', NAME: 'name', SUCCESS: 'success' };
 export default function AuthModal() {
   const { isAuthOpen, closeAuth, setTokens, setUser, fetchMe } = useAuthStore();
   const { addToast } = useAppStore();
+  const navigate = useNavigate();
 
-  const [step,          setStep]    = useState(STEPS.PHONE);
-  const [phone,         setPhone]   = useState('');
-  const [rawPhone,      setRawPhone]= useState('');
-  const [otp,           setOtp]     = useState('');
-  const [name,          setName]    = useState('');
-  const [loading,       setLoading] = useState(false);
-  const [error,         setError]   = useState('');
-  const [isNewUser,     setIsNewUser] = useState(false);
-  const [otpDigits,     setOtpDigits] = useState(['','','','','','']);
+  const [step,        setStep]      = useState(STEPS.PHONE);
+  const [phone,       setPhone]     = useState('');
+  const [rawPhone,    setRawPhone]  = useState('');
+  const [otp,         setOtp]       = useState('');
+  const [name,        setName]      = useState('');
+  const [loading,     setLoading]   = useState(false);
+  const [error,       setError]     = useState('');
+  const [isNewUser,   setIsNewUser] = useState(false);
+  const [otpDigits,   setOtpDigits] = useState(['','','','','','']);
 
   const formatPhone = (raw) => {
     const digits = raw.replace(/\D/g, '');
-    if (digits.startsWith('0') && digits.length <= 10)      return '+254' + digits.slice(1);
-    if (digits.startsWith('254') && digits.length <= 12)    return '+' + digits;
-    if (digits.startsWith('7') || digits.startsWith('1'))   return '+254' + digits;
+    if (digits.startsWith('0') && digits.length <= 10)    return '+254' + digits.slice(1);
+    if (digits.startsWith('254') && digits.length <= 12)  return '+' + digits;
+    if (digits.startsWith('7') || digits.startsWith('1')) return '+254' + digits;
     return digits ? '+' + digits : '';
   };
 
@@ -55,12 +57,11 @@ export default function AuthModal() {
   };
 
   const handleOtpChange = (index, value) => {
-    if (value.length > 1) return; // prevent paste weirdness
+    if (value.length > 1) return;
     const newDigits = [...otpDigits];
     newDigits[index] = value.replace(/\D/g, '');
     setOtpDigits(newDigits);
     setOtp(newDigits.join(''));
-    // Auto-focus next
     if (value && index < 5) {
       document.getElementById(`otp-${index + 1}`)?.focus();
     }
@@ -72,6 +73,18 @@ export default function AuthModal() {
     }
   };
 
+  const finishLogin = (user) => {
+    // ✅ Set user in store — this updates isLoggedIn reactively
+    setUser(user);
+    setStep(STEPS.SUCCESS);
+    setTimeout(() => {
+      closeAuth();
+      resetForm();
+      // ✅ Navigate to courses after login instead of staying on same page
+      navigate('/courses');
+    }, 1500);
+  };
+
   const handleVerifyOtp = async () => {
     const fullOtp = otpDigits.join('');
     if (fullOtp.length !== 6) { setError('Enter the 6-digit code'); return; }
@@ -79,13 +92,15 @@ export default function AuthModal() {
     setError('');
     try {
       const res = await authAPI.verifyOtp(phone, fullOtp);
+      // ✅ Always set tokens first
       setTokens(res.data.accessToken, res.data.refreshToken);
+
       if (isNewUser && !res.data.user?.name) {
+        // New user needs to set name
+        setUser(res.data.user); // ✅ set user even before name step
         setStep(STEPS.NAME);
       } else {
-        setUser(res.data.user);
-        setStep(STEPS.SUCCESS);
-        setTimeout(() => { closeAuth(); resetForm(); }, 1800);
+        finishLogin(res.data.user);
       }
     } catch (e) {
       setError(e?.message || 'Invalid OTP. Please try again.');
@@ -98,11 +113,12 @@ export default function AuthModal() {
       const { userAPI } = await import('../../lib/api');
       await userAPI.updateProfile({ name: name.trim() });
       const user = await fetchMe();
-      setUser(user);
-      setStep(STEPS.SUCCESS);
-      setTimeout(() => { closeAuth(); resetForm(); }, 1800);
-    } catch { setStep(STEPS.SUCCESS); setTimeout(() => { closeAuth(); resetForm(); }, 1500); }
-    finally { setLoading(false); }
+      finishLogin(user);
+    } catch {
+      // Even if name save fails, still finish login
+      const user = await fetchMe().catch(() => null);
+      finishLogin(user);
+    } finally { setLoading(false); }
   };
 
   const resetForm = () => {
@@ -174,8 +190,6 @@ export default function AuthModal() {
             <Button variant="primary" className="w-full" loading={loading} onClick={handleSendOtp}>
               Send Verification Code <ChevronRight size={16} />
             </Button>
-
-            {/* Security assurances */}
             <div className="bg-stadi-green-light rounded-xl p-3 space-y-1.5">
               {[
                 '🔒 OTP-secured login — no password to forget or steal',
@@ -185,8 +199,6 @@ export default function AuthModal() {
                 <p key={t} className="text-xs text-stadi-green font-medium">{t}</p>
               ))}
             </div>
-
-            {/* Authority logos area */}
             <div className="flex justify-center gap-4 pt-2">
               {['KNQA', 'TVET', 'NITA', 'ODPC'].map(badge => (
                 <div key={badge} className="px-2 py-1 border border-gray-200 rounded text-[10px] font-bold text-gray-400">
@@ -227,7 +239,8 @@ export default function AuthModal() {
                 Didn't receive it? Resend code
               </button>
             </div>
-            <button onClick={() => { setStep(STEPS.PHONE); setError(''); }} className="block mx-auto text-xs text-gray-400 hover:underline">
+            <button onClick={() => { setStep(STEPS.PHONE); setError(''); }}
+              className="block mx-auto text-xs text-gray-400 hover:underline">
               ← Change number
             </button>
           </div>
@@ -248,7 +261,8 @@ export default function AuthModal() {
               disabled={!name.trim()} onClick={handleSaveName}>
               Let's go! 🚀
             </Button>
-            <button onClick={handleSaveName} className="block mx-auto text-xs text-gray-400 hover:underline">
+            <button onClick={handleSaveName}
+              className="block mx-auto text-xs text-gray-400 hover:underline">
               Skip for now
             </button>
           </div>
