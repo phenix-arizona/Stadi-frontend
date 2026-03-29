@@ -126,7 +126,7 @@ export default function HomePage() {
                 <img
                   src={LOGO_FULL}
                   alt="Stadi — Learn Skills. Start Earning."
-                  className="h-16 w-auto brightness-0 invert drop-shadow-lg"
+                  className="h-16 w-auto drop-shadow-lg"
                   draggable={false}
                 />
               </div>
