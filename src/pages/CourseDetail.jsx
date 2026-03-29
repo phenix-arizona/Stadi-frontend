@@ -12,6 +12,15 @@ import useAppStore   from '../store/app.store';
 import { Button, Badge, StarRating, ProgressBar, Skeleton } from '../components/ui';
 import { LOGO_FULL, LOGO_NAV } from '../assets/logo';
 
+// ✅ Format phone to +254 format for M-Pesa
+function formatUserPhone(p) {
+  if (!p) return '';
+  if (p.startsWith('+254')) return p;
+  if (p.startsWith('0'))    return '+254' + p.slice(1);
+  if (p.startsWith('254'))  return '+' + p;
+  return p;
+}
+
 export function CourseDetailPage() {
   const { slug }    = useParams();
   const navigate    = useNavigate();
@@ -20,7 +29,7 @@ export function CourseDetailPage() {
   const { addToast }  = useAppStore();
   const [openModule, setOpenModule]   = useState(null);
   const [paying,     setPaying]       = useState(false);
-  const [phone,      setPhone]        = useState(user?.phone || '');
+  const [phone,      setPhone]        = useState(formatUserPhone(user?.phone)); // ✅ fixed
 
   const { data, isLoading } = useQuery({
     queryKey: ['course', slug],
@@ -31,12 +40,14 @@ export function CourseDetailPage() {
 
   const handleEnrol = async () => {
     if (!isLoggedIn) { openAuth(); return; }
-    if (!phone.match(/^\+254\d{9}$/)) { addToast('Enter a valid Kenyan phone for M-Pesa', 'error'); return; }
+    if (!phone.match(/^\+254\d{9}$/)) {
+      addToast('Enter a valid Kenyan phone for M-Pesa e.g. +254712345678', 'error');
+      return;
+    }
     setPaying(true);
     try {
       const res = await payments.initiate(course.id, phone);
       addToast('M-Pesa prompt sent! Enter your PIN to complete payment.', 'success', 6000);
-      // Poll for payment status
       const payId = res.data.paymentId;
       let attempts = 0;
       const poll = setInterval(async () => {
@@ -122,7 +133,7 @@ export function CourseDetailPage() {
             )}
           </div>
 
-          {/* Enrolment card — sticky on desktop */}
+          {/* Enrolment card */}
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden text-stadi-dark">
             {course.thumbnail_url ? (
               <img src={course.thumbnail_url} alt={course.title} className="w-full h-36 object-cover" />
@@ -290,7 +301,7 @@ export function CourseDetailPage() {
               <div className="flex gap-4">
                 <div className="w-14 h-14 bg-stadi-green-light rounded-2xl flex items-center justify-center text-2xl shrink-0">
                   {course.users.avatar_url
-                    ? <img src={course.users.avatar_url} className="w-full h-full rounded-2xl object-cover" />
+                    ? <img src={course.users.avatar_url} className="w-full h-full rounded-2xl object-cover" alt="instructor" />
                     : '👨🏿‍🏫'}
                 </div>
                 <div>
