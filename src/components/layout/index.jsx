@@ -87,6 +87,11 @@ export function Navbar() {
                 Admin
               </NavLink>
             )}
+            {(user?.role === 'instructor' || isAdmin) && (
+              <NavLink to="/instructor" className="text-sm font-medium text-stadi-green hover:text-stadi-green/70">
+                Instructor
+              </NavLink>
+            )}
           </div>
 
           {/* Right controls */}

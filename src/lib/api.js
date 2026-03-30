@@ -57,6 +57,7 @@ export const courses = {
   recommendations: () => api.get('/courses/recommendations'),
   bySlug:          (slug) => api.get(`/courses/${slug}`),
   byId:            (id) => api.get(`/courses/by-id/${id}`),
+  categories:      () => api.get('/courses/categories'),
   create:          (data) => api.post('/courses', data),
   update:          (id, data) => api.patch(`/courses/${id}`, data),
 };
@@ -141,4 +142,15 @@ export const adminAPI = {
   payouts:      (params) => api.get('/admin/payouts', { params }),
   approvePayout:(id) => api.post(`/payouts/${id}/approve`),
   auditLog:     () => api.get('/admin/audit-log'),
+};
+
+// ── Instructor ────────────────────────────────────────────────
+export const instructorAPI = {
+  dashboard:    () => api.get('/instructor/dashboard'),
+  submitCourse: (id) => api.post(`/instructor/courses/${id}/submit`),
+  createModule: (courseId, data) => api.post(`/instructor/courses/${courseId}/modules`, data),
+  createLesson: (moduleId, data) => api.post(`/instructor/modules/${moduleId}/lessons`, data),
+  uploadSig:    (params) => api.get('/instructor/upload-signature', { params }),
+  earnings:     () => api.get('/payouts/earnings'),
+  payouts:      () => api.get('/payouts/my'),
 };

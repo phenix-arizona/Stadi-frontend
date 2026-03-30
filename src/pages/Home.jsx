@@ -476,7 +476,7 @@ export default function HomePage() {
                 </Button>
               </button>
             )}
-            <a href="https://wa.me/254700000000" target="_blank" rel="noreferrer">
+            <a href="https://wa.me/254711285683" target="_blank" rel="noreferrer">
               <Button variant="outline" size="xl" className="border-white text-white hover:bg-white/20">
                 💬 Chat on WhatsApp
               </Button>
