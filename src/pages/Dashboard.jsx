@@ -8,7 +8,7 @@ import useAuthStore from '../store/auth.store';
 import { CourseCard } from '../components/course/CourseCard';
 
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, isAdmin, isInstructor } = useAuthStore();
 
   const { data: statsData,  isLoading: statsLoading }  = useQuery({ queryKey: ['user','stats'],       queryFn: userAPI.stats });
   const { data: contData }                              = useQuery({ queryKey: ['progress','continue'],queryFn: () => import('../lib/api').then(m=>m.progress.continuelearning()) });
@@ -31,6 +31,33 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      {/* ── Role portal banners ─────────────────────────────── */}
+      {isAdmin && (
+        <div className="mb-6 rounded-2xl bg-stadi-dark text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-stadi-orange mb-1">Admin Access</div>
+            <div className="font-bold text-lg">You have admin privileges.</div>
+            <div className="text-sm text-gray-300 mt-0.5">Manage users, courses, payments, and platform settings.</div>
+          </div>
+          <Link to="/admin" className="shrink-0">
+            <Button variant="primary" size="sm">Open Admin Dashboard →</Button>
+          </Link>
+        </div>
+      )}
+
+      {!isAdmin && isInstructor && (
+        <div className="mb-6 rounded-2xl bg-stadi-green text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-stadi-orange mb-1">Instructor Access</div>
+            <div className="font-bold text-lg">You have instructor privileges.</div>
+            <div className="text-sm text-green-100 mt-0.5">Create and manage your courses, track earnings, and view student progress.</div>
+          </div>
+          <Link to="/instructor" className="shrink-0">
+            <Button variant="secondary" size="sm">Open Instructor Portal →</Button>
+          </Link>
+        </div>
+      )}
+
       {/* Greeting */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-stadi-dark" style={{ fontFamily: 'Playfair Display' }}>

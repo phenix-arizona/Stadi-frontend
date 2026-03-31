@@ -157,6 +157,12 @@ export default function AdminPage() {
   const [newInstructor, setNewInstructor] = useState({ phone: '', name: '' });
   const [addingInstructor, setAddingInstructor] = useState(false);
 
+  // Quick-add inline state (keyboard-first, always visible on Users tab)
+  const [quickPhone, setQuickPhone] = useState('');
+  const [quickName,  setQuickName]  = useState('');
+  const [quickAdding, setQuickAdding] = useState(false);
+  const quickPhoneRef = React.useRef(null);
+
   // Pagination states
   const [pages, setPages] = useState({ users: 1, courses: 1, payments: 1, certs: 1, support: 1 });
   const pg = (k) => pages[k];
@@ -263,6 +269,36 @@ export default function AdminPage() {
     } catch (e) {
       addToast(e?.message || 'Failed to add instructor. Check the phone number.', 'error');
     } finally { setAddingInstructor(false); }
+  };
+
+  // ── Quick-add instructor (keyboard-first) ──────────────────
+  const handleQuickAdd = async () => {
+    const raw = quickPhone.trim();
+    if (!raw) return;
+    // Normalise: 07xx → +2547xx, 2547xx → +2547xx, +2547xx → +2547xx
+    const phone = raw
+      .replace(/\s+/g, '')
+      .replace(/^0/, '+254')
+      .replace(/^254/, '+254')
+      .replace(/^(?!\+)/, '+254');
+    if (!phone.match(/^\+254\d{9}$/)) {
+      addToast('Enter a valid Kenyan number e.g. 0712 345 678', 'error');
+      quickPhoneRef.current?.focus();
+      return;
+    }
+    setQuickAdding(true);
+    try {
+      await api.patch('/admin/users/set-instructor', { phone, name: quickName.trim() || undefined });
+      addToast(`✅ ${quickName.trim() || phone} is now an instructor`, 'success');
+      setQuickPhone('');
+      setQuickName('');
+      qc.invalidateQueries(['admin', 'users']);
+      quickPhoneRef.current?.focus();
+    } catch (e) {
+      addToast(e?.message || 'Failed. Check the phone number and try again.', 'error');
+    } finally {
+      setQuickAdding(false);
+    }
   };
 
   // ── Layout ───────────────────────────────────────────────────
@@ -450,6 +486,52 @@ export default function AdminPage() {
           {/* ════ USERS ═══════════════════════════════════════════ */}
           {tab === 'users' && (
             <div className="space-y-4">
+
+              {/* ── Quick-add instructor bar ─────────────────────── */}
+              <div className="bg-white rounded-2xl border border-stadi-green/30 shadow-sm p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <UserCheck size={15} className="text-stadi-green" />
+                  <span className="text-sm font-bold text-gray-900">Add Instructor</span>
+                  <span className="text-xs text-gray-400 ml-1">— type directly and press Enter</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    ref={quickPhoneRef}
+                    value={quickPhone}
+                    onChange={e => setQuickPhone(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleQuickAdd(); }}
+                    placeholder="Phone e.g. 0712 345 678 *"
+                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green bg-white"
+                    autoComplete="off"
+                    type="tel"
+                  />
+                  <input
+                    value={quickName}
+                    onChange={e => setQuickName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleQuickAdd(); }}
+                    placeholder="Full name (optional)"
+                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green bg-white"
+                    autoComplete="off"
+                  />
+                  <button
+                    onClick={handleQuickAdd}
+                    disabled={!quickPhone.trim() || quickAdding}
+                    className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-stadi-green text-white text-sm font-semibold rounded-xl hover:bg-stadi-green/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    {quickAdding
+                      ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : <UserCheck size={15} />
+                    }
+                    {quickAdding ? 'Adding…' : 'Make Instructor'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Works for existing users or new phone numbers. Number is auto-formatted to +254XXXXXXXXX.
+                  Press <kbd className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-mono">Enter</kbd> in any field to submit.
+                </p>
+              </div>
+
+              {/* ── Search + table ────────────────────────────────── */}
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -457,9 +539,6 @@ export default function AdminPage() {
                     placeholder="Search by name or phone number..."
                     className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green bg-white" />
                 </div>
-                <Button variant="primary" size="sm" onClick={() => setAddInstructorOpen(true)}>
-                  <UserCheck size={14} /> Add Instructor
-                </Button>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <Table cols={['User', 'Phone', 'Role', 'County', 'Language', 'Status', 'Joined', 'Actions']} loading={usersLoading}>
@@ -490,13 +569,47 @@ export default function AdminPage() {
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{new Date(u.created_at).toLocaleDateString('en-KE')}</td>
                       <td className="px-4 py-3">
-                        {!u.role.includes('admin') && (
-                          <button onClick={() => suspendUser.mutate({ id: u.id, active: !u.is_active })}
-                            className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors
-                              ${u.is_active ? 'text-red-500 hover:bg-red-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
-                            {u.is_active ? <><UserX size={12} /> Suspend</> : <><UserCheck size={12} /> Restore</>}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {!u.role.includes('admin') && (
+                            <button onClick={() => suspendUser.mutate({ id: u.id, active: !u.is_active })}
+                              className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors
+                                ${u.is_active ? 'text-red-500 hover:bg-red-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
+                              {u.is_active ? <><UserX size={12} /> Suspend</> : <><UserCheck size={12} /> Restore</>}
+                            </button>
+                          )}
+                          {u.role === 'learner' && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.patch('/admin/users/set-instructor', { phone: u.phone });
+                                  addToast(`✅ ${u.name || u.phone} is now an instructor`, 'success');
+                                  qc.invalidateQueries(['admin', 'users']);
+                                } catch (e) {
+                                  addToast(e?.message || 'Failed to update role.', 'error');
+                                }
+                              }}
+                              className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg text-stadi-green hover:bg-stadi-green-light transition-colors"
+                            >
+                              <UserCheck size={12} /> Make Instructor
+                            </button>
+                          )}
+                          {u.role === 'instructor' && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.patch(`/admin/users/${u.id}`, { role: 'learner' });
+                                  addToast(`${u.name || u.phone} role set back to learner.`, 'info');
+                                  qc.invalidateQueries(['admin', 'users']);
+                                } catch (e) {
+                                  addToast(e?.message || 'Failed to update role.', 'error');
+                                }
+                              }}
+                              className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
+                            >
+                              <UserX size={12} /> Remove Instructor
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

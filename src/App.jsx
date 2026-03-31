@@ -52,9 +52,39 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+// Spinner shown while session is being restored
+function RoleLoadingSpinner() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-stadi-green border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
 function AdminRoute({ children }) {
-  const { user } = useAuthStore();
-  if (!['admin','super_admin'].includes(user?.role)) return <NotFound />;
+  const { user, isLoggedIn, isLoading, openAuth } = useAuthStore();
+
+  // Not logged in at all → prompt login
+  useEffect(() => { if (!isLoggedIn && !isLoading) openAuth(); }, [isLoggedIn, isLoading]);
+
+  // Still fetching the user profile → show spinner, not 404
+  if (isLoading || (isLoggedIn && !user)) return <RoleLoadingSpinner />;
+
+  // Logged in but wrong role
+  if (!isLoggedIn || !['admin', 'super_admin'].includes(user?.role)) return <NotFound />;
+
+  return children;
+}
+
+function InstructorRoute({ children }) {
+  const { user, isLoggedIn, isLoading, openAuth } = useAuthStore();
+
+  useEffect(() => { if (!isLoggedIn && !isLoading) openAuth(); }, [isLoggedIn, isLoading]);
+
+  if (isLoading || (isLoggedIn && !user)) return <RoleLoadingSpinner />;
+
+  if (!isLoggedIn || !['instructor', 'admin', 'super_admin'].includes(user?.role)) return <NotFound />;
+
   return children;
 }
 
@@ -105,7 +135,7 @@ export default function App() {
             <Route path="/learn/:courseId"       element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
             <Route path="/profile"               element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/admin/*"               element={<AdminRoute><AdminPage /></AdminRoute>} />
-            <Route path="/instructor/*"          element={<ProtectedRoute><InstructorPage /></ProtectedRoute>} />
+            <Route path="/instructor/*"          element={<InstructorRoute><InstructorPage /></InstructorRoute>} />
             <Route path="*"                      element={<NotFound />} />
           </Routes>
         </Layout>
