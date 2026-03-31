@@ -82,16 +82,7 @@ export function Navbar() {
               `text-sm font-medium transition-colors ${isActive ? 'text-stadi-green' : 'text-stadi-gray hover:text-stadi-green'}`}>
               About Stadi
             </NavLink>
-            {isAdmin && (
-              <NavLink to="/admin" className="text-sm font-medium text-stadi-orange hover:text-stadi-green">
-                Admin
-              </NavLink>
-            )}
-            {(user?.role === 'instructor' || isAdmin) && (
-              <NavLink to="/instructor" className="text-sm font-medium text-stadi-green hover:text-stadi-green/70">
-                Instructor
-              </NavLink>
-            )}
+
           </div>
 
           {/* Right controls */}

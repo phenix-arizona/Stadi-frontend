@@ -153,6 +153,9 @@ export default function AdminPage() {
   const [tab, setTab] = useState('overview');
   const [confirmModal, setConfirmModal] = useState(null);
   const [confirmReason, setConfirmReason] = useState('');
+  const [addInstructorOpen, setAddInstructorOpen] = useState(false);
+  const [newInstructor, setNewInstructor] = useState({ phone: '', name: '' });
+  const [addingInstructor, setAddingInstructor] = useState(false);
 
   // Pagination states
   const [pages, setPages] = useState({ users: 1, courses: 1, payments: 1, certs: 1, support: 1 });
@@ -244,6 +247,23 @@ export default function AdminPage() {
   const revokeCert     = useMutation({ mutationFn: ({ id, reason }) => api.patch(`/certificates/${id}/revoke`, { reason }), onSuccess: () => { qc.invalidateQueries(['admin', 'certs']); addToast('Certificate revoked.', 'info'); setConfirmModal(null); } });
   const reinstateCert  = useMutation({ mutationFn: (id) => api.patch(`/certificates/${id}/reinstate`, {}), onSuccess: () => { qc.invalidateQueries(['admin', 'certs']); addToast('Certificate reinstated ✓', 'success'); } });
   const closeTicket    = useMutation({ mutationFn: (id) => api.patch(`/support/tickets/${id}`, { status: 'resolved' }), onSuccess: () => { qc.invalidateQueries(['admin', 'support']); addToast('Ticket resolved ✓', 'success'); } });
+
+  // ── Add Instructor ──────────────────────────────────────────
+  const handleAddInstructor = async () => {
+    const phone = newInstructor.phone.trim().replace(/^0/, '+254').replace(/^(?!\+)/, '+254');
+    if (!phone.match(/^\+254\d{9}$/)) { addToast('Enter a valid Kenyan number e.g. 0712345678', 'error'); return; }
+    setAddingInstructor(true);
+    try {
+      // Find or create user, then set role to instructor
+      const res = await api.patch(`/admin/users/set-instructor`, { phone, name: newInstructor.name.trim() });
+      addToast(`✅ ${newInstructor.name || phone} is now an instructor`, 'success');
+      setAddInstructorOpen(false);
+      setNewInstructor({ phone: '', name: '' });
+      qc.invalidateQueries(['admin', 'users']);
+    } catch (e) {
+      addToast(e?.message || 'Failed to add instructor. Check the phone number.', 'error');
+    } finally { setAddingInstructor(false); }
+  };
 
   // ── Layout ───────────────────────────────────────────────────
   return (
@@ -437,6 +457,9 @@ export default function AdminPage() {
                     placeholder="Search by name or phone number..."
                     className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green bg-white" />
                 </div>
+                <Button variant="primary" size="sm" onClick={() => setAddInstructorOpen(true)}>
+                  <UserCheck size={14} /> Add Instructor
+                </Button>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <Table cols={['User', 'Phone', 'Role', 'County', 'Language', 'Status', 'Joined', 'Actions']} loading={usersLoading}>
@@ -735,6 +758,54 @@ export default function AdminPage() {
           )}
         </div>
       </main>
+
+      {/* ── Add Instructor Modal ──────────────────────────────────── */}
+      <Modal isOpen={addInstructorOpen} onClose={() => { setAddInstructorOpen(false); setNewInstructor({ phone: '', name: '' }); }} title="Add Instructor" size="sm">
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-gray-500">
+            Enter the phone number of an existing Stadi user to make them an instructor,
+            or provide a new phone number to create their account.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1.5">Phone Number *</label>
+            <input
+              value={newInstructor.phone}
+              onChange={e => setNewInstructor(v => ({ ...v, phone: e.target.value }))}
+              placeholder="e.g. 0712 345 678"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green"
+              autoFocus
+            />
+            <p className="text-xs text-gray-400 mt-1">Kenyan number — will be formatted to +254XXXXXXXXX</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-900 mb-1.5">Full Name</label>
+            <input
+              value={newInstructor.name}
+              onChange={e => setNewInstructor(v => ({ ...v, name: e.target.value }))}
+              placeholder="e.g. Achieng Otieno"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green"
+            />
+            <p className="text-xs text-gray-400 mt-1">Optional — updates the user's display name</p>
+          </div>
+          <div className="bg-stadi-green-light rounded-xl p-3 space-y-1">
+            <p className="text-xs text-stadi-green font-semibold">What happens when you add an instructor:</p>
+            <p className="text-xs text-gray-600">• Their account role changes to <strong>instructor</strong></p>
+            <p className="text-xs text-gray-600">• They can log into stadi.co.ke and access the Instructor Portal at <strong>/instructor</strong></p>
+            <p className="text-xs text-gray-600">• They can create, submit, and earn from courses</p>
+            <p className="text-xs text-gray-600">• They <strong>cannot</strong> access the Admin dashboard</p>
+          </div>
+          <div className="flex gap-3 pt-1">
+            <Button variant="primary" className="flex-1" loading={addingInstructor}
+              disabled={!newInstructor.phone.trim()}
+              onClick={handleAddInstructor}>
+              <UserCheck size={14} /> Make Instructor
+            </Button>
+            <Button variant="ghost" className="flex-1" onClick={() => { setAddInstructorOpen(false); setNewInstructor({ phone: '', name: '' }); }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* ── Confirm modal ─────────────────────────────────────────── */}
       <Modal isOpen={!!confirmModal} onClose={() => { setConfirmModal(null); setConfirmReason(''); }} title="Confirm Action" size="sm">

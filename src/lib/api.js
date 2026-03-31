@@ -146,11 +146,30 @@ export const adminAPI = {
 
 // ── Instructor ────────────────────────────────────────────────
 export const instructorAPI = {
-  dashboard:    () => api.get('/instructor/dashboard'),
-  submitCourse: (id) => api.post(`/instructor/courses/${id}/submit`),
-  createModule: (courseId, data) => api.post(`/instructor/courses/${courseId}/modules`, data),
-  createLesson: (moduleId, data) => api.post(`/instructor/modules/${moduleId}/lessons`, data),
-  uploadSig:    (params) => api.get('/instructor/upload-signature', { params }),
-  earnings:     () => api.get('/payouts/earnings'),
-  payouts:      () => api.get('/payouts/my'),
+  dashboard:      ()               => api.get('/instructor/dashboard'),
+  // Course builder
+  buildData:      (courseId)       => api.get(`/instructor/courses/${courseId}/build`),
+  updateCourse:   (courseId, data) => api.patch(`/instructor/courses/${courseId}`, data),
+  submitCourse:   (courseId)       => api.post(`/instructor/courses/${courseId}/submit`),
+  // Modules
+  createModule:   (courseId, data) => api.post(`/instructor/courses/${courseId}/modules`, data),
+  updateModule:   (modId, data)    => api.patch(`/instructor/modules/${modId}`, data),
+  deleteModule:   (modId)          => api.delete(`/instructor/modules/${modId}`),
+  reorderModules: (courseId, order)=> api.post(`/instructor/courses/${courseId}/modules/reorder`, { order }),
+  // Lessons
+  createLesson:   (modId, data)    => api.post(`/instructor/modules/${modId}/lessons`, data),
+  updateLesson:   (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}`, data),
+  deleteLesson:   (lessonId)       => api.delete(`/instructor/lessons/${lessonId}`),
+  setVideo:       (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}/video`, data),
+  removeVideo:    (lessonId, lang) => api.delete(`/instructor/lessons/${lessonId}/video/${lang}`),
+  // Quizzes
+  getQuizzes:     (courseId)       => api.get(`/instructor/courses/${courseId}/quizzes`),
+  createQuiz:     (courseId, data) => api.post(`/instructor/courses/${courseId}/quizzes`, data),
+  updateQuiz:     (quizId, data)   => api.patch(`/instructor/quizzes/${quizId}`, data),
+  deleteQuiz:     (quizId)         => api.delete(`/instructor/quizzes/${quizId}`),
+  // Upload
+  uploadSig:      (params)         => api.get('/instructor/upload-signature', { params }),
+  // Earnings
+  earnings:       ()               => api.get('/payouts/earnings'),
+  payouts:        ()               => api.get('/payouts/my'),
 };
