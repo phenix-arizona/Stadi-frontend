@@ -10,6 +10,10 @@ import { CourseCard } from '../components/course/CourseCard';
 export default function DashboardPage() {
   const { user, isAdmin, isInstructor } = useAuthStore();
 
+  // ✅ Call as functions since they are not reactive getters
+  const userIsAdmin      = typeof isAdmin      === 'function' ? isAdmin()      : isAdmin;
+  const userIsInstructor = typeof isInstructor === 'function' ? isInstructor() : isInstructor;
+
   const { data: statsData,  isLoading: statsLoading }  = useQuery({ queryKey: ['user','stats'],       queryFn: userAPI.stats });
   const { data: contData }                              = useQuery({ queryKey: ['progress','continue'],queryFn: () => import('../lib/api').then(m=>m.progress.continuelearning()) });
   const { data: streakData }                            = useQuery({ queryKey: ['streak','my'],        queryFn: streakAPI.get });
@@ -32,7 +36,7 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       {/* ── Role portal banners ─────────────────────────────── */}
-      {isAdmin && (
+      {userIsAdmin && (
         <div className="mb-6 rounded-2xl bg-stadi-dark text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-stadi-orange mb-1">Admin Access</div>
@@ -45,7 +49,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!isAdmin && isInstructor && (
+      {!userIsAdmin && userIsInstructor && (
         <div className="mb-6 rounded-2xl bg-stadi-green text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-stadi-orange mb-1">Instructor Access</div>
@@ -69,11 +73,11 @@ export default function DashboardPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {[
-          { icon:'📚', label:'Enrolled',     value: statsLoading ? '–' : stats.enrolled,          color:'stadi-green' },
-          { icon:'✅', label:'Completed',    value: statsLoading ? '–' : stats.completed,          color:'stadi-green' },
-          { icon:'🏆', label:'Certificates', value: statsLoading ? '–' : stats.certificates,       color:'stadi-orange' },
-          { icon:'🔥', label:'Day Streak',   value: statsLoading ? '–' : streak.current_streak||0,  color:'stadi-orange' },
-          { icon:'📅', label:'Days Learned', value: statsLoading ? '–' : streak.total_days_learned||0,color:'stadi-green' },
+          { icon:'📚', label:'Enrolled',     value: statsLoading ? '–' : stats.enrolled,               color:'stadi-green'  },
+          { icon:'✅', label:'Completed',    value: statsLoading ? '–' : stats.completed,               color:'stadi-green'  },
+          { icon:'🏆', label:'Certificates', value: statsLoading ? '–' : stats.certificates,            color:'stadi-orange' },
+          { icon:'🔥', label:'Day Streak',   value: statsLoading ? '–' : streak.current_streak  || 0,   color:'stadi-orange' },
+          { icon:'📅', label:'Days Learned', value: statsLoading ? '–' : streak.total_days_learned || 0,color:'stadi-green'  },
         ].map(s => (
           <div key={s.label} className="card p-4 text-center">
             <div className="text-2xl mb-1">{s.icon}</div>
@@ -153,7 +157,10 @@ export default function DashboardPage() {
                         <a href={c.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-stadi-green hover:underline">📄 Download</a>
                       )}
                       <button
-                        onClick={() => { const t = encodeURIComponent(`I earned my Stadi Certificate in ${c.courses?.title}! Verify it here: https://stadi.co.ke/certificates/verify/${c.certificate_number}`); window.open(`https://wa.me/?text=${t}`, '_blank'); }}
+                        onClick={() => {
+                          const t = encodeURIComponent(`I earned my Stadi Certificate in ${c.courses?.title}! Verify it here: https://stadi.co.ke/certificates/verify/${c.certificate_number}`);
+                          window.open(`https://wa.me/?text=${t}`, '_blank');
+                        }}
                         className="text-xs text-stadi-green hover:underline"
                       >💬 Share</button>
                     </div>
