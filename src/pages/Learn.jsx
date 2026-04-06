@@ -358,7 +358,7 @@ function Assessment({ courseId, course, onPassed }) {
                 <a href={certUrl} target="_blank" rel="noreferrer">
                   <Button variant="primary" size="sm"><Download size={14}/> Download Certificate PDF</Button>
                 </a>
-                <a href={`https://wa.me/?text=${encodeURIComponent(`🏆 I just earned my Stadi Certificate in "${course?.title}"!\n\nVerify it: https://stadi.co.ke/certificates/verify\n\nLearn with me on stadi.co.ke`)}`}
+                <a href={`https://wa.me/?text=${encodeURIComponent(`🏆 I just earned my Stadi Certificate in "${course?.title}"!\n\nVerify it: https://stadi.ke/certificates/verify\n\nLearn with me on stadi.ke`)}`}
                    target="_blank" rel="noreferrer">
                   <Button variant="outline" size="sm"><Share2 size={14}/> Share on WhatsApp</Button>
                 </a>

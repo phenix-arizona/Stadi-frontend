@@ -288,8 +288,21 @@ export function Footer() {
           </p>
           <div className="text-xs text-gray-500">
             <div>📍 Kisumu City, Western Kenya</div>
-            <div className="mt-1">📱 WhatsApp: +254 701901244</div>
-            <div className="mt-1">✉️ info@stadi.ke</div>
+            <div className="mt-1">
+              <a
+                href="https://wa.me/254701901244"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-stadi-orange transition-colors"
+              >
+                📱 WhatsApp: +254 701 901 244
+              </a>
+            </div>
+            <div className="mt-1">
+              <a href="mailto:info@stadi.ke" className="hover:text-stadi-orange transition-colors">
+                ✉️ info@stadi.ke
+              </a>
+            </div>
           </div>
         </div>
 
@@ -334,7 +347,7 @@ export function Footer() {
           <div className="mt-6">
             <h4 className="font-semibold text-sm mb-3 text-gray-300">Languages</h4>
             <p className="text-xs text-gray-500 leading-relaxed">
-              English · Kiswahili · Dholuo · Luhya · Kikuyu · Kalenjin · Kamba · Kisii · +34 more
+              English · Kiswahili · Dholuo · Luhya · Kikuyu · Kalenjin · Kamba · Kisii · +7 more
             </p>
           </div>
         </div>
@@ -343,7 +356,7 @@ export function Footer() {
       <div className="border-t border-gray-700 py-4">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-500">
           <span>© {new Date().getFullYear()} Stadi Learning Platform Ltd. All rights reserved.</span>
-          <span>Registered in Kenya </span>
+          <span>Registered in Kenya | KRA PIN: [To be added] | ODPC Registered</span>
         </div>
       </div>
     </footer>
