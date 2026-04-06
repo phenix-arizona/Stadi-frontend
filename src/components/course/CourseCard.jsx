@@ -18,121 +18,37 @@ function formatDuration(seconds) {
   return `${m}min`;
 }
 
-// ── Category gradient themes ──────────────────────────────────
-const CATEGORY_THEMES = {
-  energy:       { gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 40%, #92400e 100%)', pattern: 'radial',   accent: '#fef3c7' },
-  technology:   { gradient: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #1e1b4b 100%)', pattern: 'grid',     accent: '#e0f2fe' },
-  textile:      { gradient: 'linear-gradient(135deg, #ec4899 0%, #a855f7 50%, #6d28d9 100%)', pattern: 'diagonal', accent: '#fdf4ff' },
-  fisheries:    { gradient: 'linear-gradient(135deg, #06b6d4 0%, #0284c7 50%, #1e3a5f 100%)', pattern: 'radial',   accent: '#ecfeff' },
-  agriculture:  { gradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 40%, #14532d 100%)', pattern: 'dots',     accent: '#f0fdf4' },
-  construction: { gradient: 'linear-gradient(135deg, #f97316 0%, #c2410c 50%, #431407 100%)', pattern: 'brick',    accent: '#fff7ed' },
-  beauty:       { gradient: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 40%, #881337 100%)', pattern: 'radial',   accent: '#fff1f2' },
-  hospitality:  { gradient: 'linear-gradient(135deg, #fb923c 0%, #ea580c 50%, #7c2d12 100%)', pattern: 'dots',     accent: '#fff7ed' },
-  automotive:   { gradient: 'linear-gradient(135deg, #64748b 0%, #334155 50%, #0f172a 100%)', pattern: 'grid',     accent: '#f1f5f9' },
-  business:     { gradient: 'linear-gradient(135deg, #10b981 0%, #059669 40%, #064e3b 100%)', pattern: 'diagonal', accent: '#ecfdf5' },
-  default:      { gradient: 'linear-gradient(135deg, #4ade80 0%, #16a34a 50%, #14532d 100%)', pattern: 'dots',     accent: '#f0fdf4' },
+// ── Category fallback images (Unsplash, by slug) ──────────────
+const CATEGORY_IMAGES = {
+  energy:       'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&h=352&fit=crop&auto=format',
+  technology:   'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=600&h=352&fit=crop&auto=format',
+  textile:      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=352&fit=crop&auto=format',
+  fisheries:    'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=352&fit=crop&auto=format',
+  agriculture:  'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=600&h=352&fit=crop&auto=format',
+  construction: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=352&fit=crop&auto=format',
+  beauty:       'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&h=352&fit=crop&auto=format',
+  hospitality:  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=352&fit=crop&auto=format',
+  automotive:   'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&h=352&fit=crop&auto=format',
+  business:     'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=352&fit=crop&auto=format',
+  default:      'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=352&fit=crop&auto=format',
 };
 
-// ── SVG pattern overlays ──────────────────────────────────────
-// Each pattern gets a unique SVG id so multiple cards on the same
-// page don't clash (SVG <defs> ids are global in the DOM).
-let _patternCounter = 0;
-
-function PatternOverlay({ type, accent }) {
-  const [uid] = useState(() => ++_patternCounter);
-  const a = accent + '30'; // ~19% opacity
-
-  switch (type) {
-    case 'grid':
-      return (
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id={`cc-grid-${uid}`} width="24" height="24" patternUnits="userSpaceOnUse">
-              <path d="M 24 0 L 0 0 0 24" fill="none" stroke={a} strokeWidth="0.8" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#cc-grid-${uid})`} />
-        </svg>
-      );
-    case 'diagonal':
-      return (
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id={`cc-diag-${uid}`} width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <line x1="0" y1="0" x2="0" y2="20" stroke={a} strokeWidth="1.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#cc-diag-${uid})`} />
-        </svg>
-      );
-    case 'dots':
-      return (
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id={`cc-dots-${uid}`} width="18" height="18" patternUnits="userSpaceOnUse">
-              <circle cx="3" cy="3" r="1.5" fill={a} />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#cc-dots-${uid})`} />
-        </svg>
-      );
-    case 'brick':
-      return (
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id={`cc-brick-${uid}`} width="40" height="20" patternUnits="userSpaceOnUse">
-              <rect width="40" height="20" fill="none" stroke={a} strokeWidth="0.8" />
-              <line x1="20" y1="20" x2="20" y2="40" stroke={a} strokeWidth="0.8" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#cc-brick-${uid})`} />
-        </svg>
-      );
-    case 'radial':
-    default: {
-      const gradId = `cc-rad-${uid}`;
-      return (
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id={gradId} cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor={a} />
-              <stop offset="100%" stopColor="transparent" />
-            </radialGradient>
-          </defs>
-          <rect width="100%" height="100%" fill={`url(#${gradId})`} />
-        </svg>
-      );
-    }
-  }
-}
-
-// ── Gradient thumbnail (no photo fallback) ────────────────────
-function GradientThumbnail({ course, theme }) {
+// ── Image thumbnail with category overlay label ───────────────
+function ImageThumbnail({ course, slug }) {
+  const src = CATEGORY_IMAGES[slug] || CATEGORY_IMAGES.default;
   return (
-    <div
-      className="relative w-full h-full overflow-hidden flex items-center justify-center"
-      style={{ background: theme.gradient }}
-    >
-      <PatternOverlay type={theme.pattern} accent={theme.accent} />
-      {/* Vignette */}
+    <div className="relative w-full h-full overflow-hidden">
+      <img
+        src={src}
+        alt={course.categories?.name || course.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+      />
+      {/* Dark gradient at bottom so earn badge stays readable */}
       <div
         className="absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.32) 100%)' }}
+        style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.45) 100%)' }}
       />
-      <div className="relative z-10 text-center select-none">
-        <div
-          className="transition-transform duration-300 group-hover:scale-110"
-          style={{ fontSize: '2.8rem', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.28))' }}
-        >
-          {course.categories?.icon_emoji || '📚'}
-        </div>
-        <div
-          className="mt-1 text-xs font-semibold uppercase tracking-widest"
-          style={{ color: 'rgba(255,255,255,0.75)', letterSpacing: '0.12em' }}
-        >
-          {course.categories?.name}
-        </div>
-      </div>
     </div>
   );
 }
@@ -163,8 +79,7 @@ export function CourseCard({ course, showEarnBadge = true, enrolled = false, pro
   const [bookmarked, setBookmarked] = useState(false);
   const [bLoading,   setBLoading]   = useState(false);
 
-  const slug  = course.categories?.slug || 'default';
-  const theme = CATEGORY_THEMES[slug] || CATEGORY_THEMES.default;
+  const slug = course.categories?.slug || 'default';
 
   // Smart routing: enrolled → /learn/:id, public → /courses/:slug
   const href = enrolled ? `/learn/${course.id}` : `/courses/${course.slug}`;
@@ -193,7 +108,7 @@ export function CourseCard({ course, showEarnBadge = true, enrolled = false, pro
               loading="lazy"
             />
           ) : (
-            <GradientThumbnail course={course} theme={theme} />
+            <ImageThumbnail course={course} slug={slug} />
           )}
         </Link>
 

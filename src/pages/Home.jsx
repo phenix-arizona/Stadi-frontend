@@ -51,100 +51,79 @@ const TESTIMONIALS = [
 ];
 
 const CATEGORIES = [
-  {
-    name: 'Energy',
-    slug: 'energy',
-    earn: 'KES 20K–40K',
-    image: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop', // solar panels
-  },
-  {
-    name: 'Technology',
-    slug: 'technology',
-    earn: 'KES 15K–30K',
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop', // tech/phone
-  },
-  {
-    name: 'Textile',
-    slug: 'textile',
-    earn: 'KES 12K–25K',
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop', // sewing/textile
-  },
-  {
-    name: 'Fisheries',
-    slug: 'fisheries',
-    earn: 'KES 10K–20K',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop', // fishing
-  },
-  {
-    name: 'Agriculture',
-    slug: 'agriculture',
-    earn: 'KES 8K–18K',
-    image: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=300&fit=crop', // farming
-  },
-  {
-    name: 'Construction',
-    slug: 'construction',
-    earn: 'KES 18K–35K',
-    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop', // construction
-  },
-  {
-    name: 'Beauty',
-    slug: 'beauty',
-    earn: 'KES 10K–22K',
-    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop', // beauty salon
-  },
-  {
-    name: 'Hospitality',
-    slug: 'hospitality',
-    earn: 'KES 8K–16K',
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop', // restaurant/chef
-  },
-  {
-    name: 'Automotive',
-    slug: 'automotive',
-    earn: 'KES 15K–28K',
-    image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=300&fit=crop', // mechanic
-  },
-  {
-    name: 'Business',
-    slug: 'business',
-    earn: 'KES 10K–30K',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop', // business professional
-  },
+  { name:'Energy',       slug:'energy',       earn:'KES 20K–40K', image:'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=220&fit=crop&auto=format' },
+  { name:'Technology',   slug:'technology',   earn:'KES 15K–30K', image:'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400&h=220&fit=crop&auto=format' },
+  { name:'Textile',      slug:'textile',      earn:'KES 12K–25K', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=220&fit=crop&auto=format' },
+  { name:'Fisheries',    slug:'fisheries',    earn:'KES 10K–20K', image:'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=220&fit=crop&auto=format' },
+  { name:'Agriculture',  slug:'agriculture',  earn:'KES 8K–18K',  image:'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=220&fit=crop&auto=format' },
+  { name:'Construction', slug:'construction', earn:'KES 18K–35K', image:'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=220&fit=crop&auto=format' },
+  { name:'Beauty',       slug:'beauty',       earn:'KES 10K–22K', image:'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=220&fit=crop&auto=format' },
+  { name:'Hospitality',  slug:'hospitality',  earn:'KES 8K–16K',  image:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=220&fit=crop&auto=format' },
+  { name:'Automotive',   slug:'automotive',   earn:'KES 15K–28K', image:'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=220&fit=crop&auto=format' },
+  { name:'Business',     slug:'business',     earn:'KES 10K–30K', image:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=220&fit=crop&auto=format' },
 ];
 
 const HOW = [
-  { step:'1', emoji:'👀', title:'Browse free',     desc:'Explore 35 skills. See exactly what you\'ll earn before spending a shilling.' },
-  { step:'2', emoji:'💳', title:'Pay via M-Pesa',  desc:'From KES 150. One tap. No bank, no card, no hassle.' },
-  { step:'3', emoji:'📱', title:'Learn offline',   desc:'Download once on Wi-Fi. Watch anytime — no data needed.' },
-  { step:'4', emoji:'🏆', title:'Get certified',   desc:'Pass the test, earn your KNQA-aligned certificate, show it to clients.' },
+  { step:'1', emoji:'👀', title:'Browse free',    desc:"Explore 35 skills. See exactly what you'll earn before spending a shilling." },
+  { step:'2', emoji:'💳', title:'Pay via M-Pesa', desc:'From KES 150. One tap. No bank, no card, no hassle.' },
+  { step:'3', emoji:'📱', title:'Learn offline',  desc:'Download once on Wi-Fi. Watch anytime — no data needed.' },
+  { step:'4', emoji:'🏆', title:'Get certified',  desc:'Pass the test, earn your KNQA-aligned certificate, show it to clients.' },
 ];
 
 const WHY = [
-  { icon:Globe,    title:'15 local languages',   desc:'Dholuo, Luhya, Kikuyu, Kalenjin and 11 more. No language barrier.' },
-  { icon:Wifi,     title:'Offline — no data bill',desc:'Download on Wi-Fi, study without data. Built for rural Kenya.' },
-  { icon:TrendingUp,title:'Every course shows earnings', desc:'Real income data from graduates in your county before you pay.' },
-  { icon:BadgeCheck,title:'KNQA-aligned certificates', desc:'Recognised by employers. Backed by Kenya\'s qualifications framework.' },
-  { icon:Smartphone,title:'M-Pesa, KES 150',     desc:'No bank account needed. Pay the same way you pay for everything else.' },
-  { icon:Users,    title:'Kenyan instructors',    desc:'Learn from artisans who know local tools, suppliers, and market rates.' },
+  { icon:Globe,     title:'15 local languages',        desc:'Dholuo, Luhya, Kikuyu, Kalenjin and 11 more. No language barrier.' },
+  { icon:Wifi,      title:'Offline — no data bill',    desc:'Download on Wi-Fi, study without data. Built for rural Kenya.' },
+  { icon:TrendingUp,title:'Every course shows earnings',desc:'Real income data from graduates in your county before you pay.' },
+  { icon:BadgeCheck,title:'KNQA-aligned certificates', desc:"Recognised by employers. Backed by Kenya's qualifications framework." },
+  { icon:Smartphone,title:'M-Pesa, KES 150',           desc:'No bank account needed. Pay the same way you pay for everything else.' },
+  { icon:Users,     title:'Kenyan instructors',         desc:'Learn from artisans who know local tools, suppliers, and market rates.' },
 ];
 
+// ── Category Card ─────────────────────────────────────────────
+function CategoryCard({ category }) {
+  return (
+    <Link
+      to={`/courses?category=${category.slug}`}
+      className="group block rounded-xl border border-gray-100 overflow-hidden hover:-translate-y-1 transition-all duration-200 bg-white shadow-sm hover:shadow-md hover:border-stadi-green/30"
+    >
+      <div className="relative h-28 overflow-hidden">
+        <img
+          src={category.image}
+          alt={category.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30" />
+      </div>
+      <div className="p-3">
+        <p className="font-semibold text-sm text-stadi-dark mb-1 group-hover:text-stadi-green transition-colors">
+          {category.name}
+        </p>
+        <span className="inline-block text-[10px] bg-stadi-orange/10 text-stadi-orange font-semibold px-2 py-0.5 rounded-full">
+          {category.earn}/mo
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────
 export default function HomePage() {
   const { isLoggedIn, openAuth } = useAuthStore();
-  const navigate   = useNavigate();
-  const [searchQ,  setSearchQ]  = useState('');
-  const [tickerIdx,setTickerIdx]= useState(0);
-  const [activeT,  setActiveT]  = useState(0);
+  const navigate    = useNavigate();
+  const [searchQ,   setSearchQ]   = useState('');
+  const [tickerIdx, setTickerIdx] = useState(0);
+  const [activeT,   setActiveT]   = useState(0);
 
   const { data: featuredData, isLoading } = useQuery({
-    queryKey: ['courses','featured'],
+    queryKey: ['courses', 'featured'],
     queryFn:  () => coursesAPI.list({ limit: 8 }),
   });
   const featured = featuredData?.data || [];
 
   // Rotate ticker
   useEffect(() => {
-    const t = setInterval(() => setTickerIdx(i => (i+1) % TICKER.length), 2800);
+    const t = setInterval(() => setTickerIdx(i => (i + 1) % TICKER.length), 2800);
     return () => clearInterval(t);
   }, []);
 
@@ -154,7 +133,7 @@ export default function HomePage() {
     <div className="overflow-x-hidden">
 
       {/* ══════════════════════════════════════════════════════
-          HERO — full viewport, bold, Kenya-first
+          HERO
       ══════════════════════════════════════════════════════ */}
       <section className="relative bg-gradient-to-br from-[#0d4a2f] via-[#1A6B4A] to-[#1e7a55] min-h-[92vh] flex items-center overflow-hidden">
 
@@ -170,7 +149,7 @@ export default function HomePage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 w-full">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
 
-            {/* ── LEFT ────────────────────────────────────── */}
+            {/* LEFT */}
             <div>
               {/* Live ticker pill */}
               <div className="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-7 transition-all duration-500">
@@ -187,7 +166,7 @@ export default function HomePage() {
 
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-5"
-                  style={{ fontFamily:'Playfair Display' }}>
+                style={{ fontFamily:'Playfair Display' }}>
                 Turn a Skill Into
                 <br />
                 <span className="text-stadi-orange">KES 20,000/mo</span>
@@ -204,13 +183,17 @@ export default function HomePage() {
                 </span>
               </p>
 
-              {/* Search / CTA */}
+              {/* Search */}
               <form
-                onSubmit={e => { e.preventDefault(); navigate(searchQ ? `/courses?q=${encodeURIComponent(searchQ)}` : '/courses'); }}
+                onSubmit={e => {
+                  e.preventDefault();
+                  navigate(searchQ ? `/courses?q=${encodeURIComponent(searchQ)}` : '/courses');
+                }}
                 className="flex gap-2 mb-6 max-w-md"
               >
                 <input
-                  value={searchQ} onChange={e => setSearchQ(e.target.value)}
+                  value={searchQ}
+                  onChange={e => setSearchQ(e.target.value)}
                   placeholder="Try: Solar, Tailoring, Phone Repair..."
                   className="flex-1 px-4 py-3.5 rounded-xl text-stadi-dark text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-stadi-orange bg-white shadow-lg"
                 />
@@ -220,7 +203,7 @@ export default function HomePage() {
                 </button>
               </form>
 
-              {/* Dual CTAs */}
+              {/* CTAs */}
               <div className="flex flex-wrap gap-3 mb-8">
                 {!isLoggedIn && (
                   <button onClick={openAuth}
@@ -238,7 +221,7 @@ export default function HomePage() {
               {/* Trust row */}
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <div className="flex -space-x-2">
-                  {['👨🏿','👩🏾','👨🏿','👩🏿','👨🏾'].map((e,i) => (
+                  {['👨🏿','👩🏾','👨🏿','👩🏿','👨🏾'].map((e, i) => (
                     <span key={i} className="w-8 h-8 rounded-full bg-stadi-orange/30 border-2 border-white flex items-center justify-center text-sm">{e}</span>
                   ))}
                 </div>
@@ -246,13 +229,13 @@ export default function HomePage() {
                   <strong className="text-white">5,000+</strong> Kenyans earning with Stadi
                 </div>
                 <div className="flex items-center gap-1">
-                  {'★★★★★'.split('').map((s,i) => <span key={i} className="text-stadi-orange text-sm">{s}</span>)}
+                  {'★★★★★'.split('').map((s, i) => <span key={i} className="text-stadi-orange text-sm">{s}</span>)}
                   <span className="text-white/60 text-xs ml-1">4.8/5</span>
                 </div>
               </div>
             </div>
 
-            {/* ── RIGHT — Income proof card ────────────────── */}
+            {/* RIGHT — Income proof card */}
             <div className="hidden lg:block">
               <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
@@ -263,14 +246,14 @@ export default function HomePage() {
                 </div>
                 <div className="space-y-3">
                   {[
-                    { skill:'Solar Installation',  county:'Kisumu',   earn:'KES 28,000/mo', emoji:'☀️', time:'2 weeks' },
-                    { skill:'Phone Repair',         county:'Kakamega', earn:'KES 22,000/mo', emoji:'📱', time:'10 days' },
-                    { skill:'Tailoring',            county:'Siaya',    earn:'KES 18,500/mo', emoji:'✂️', time:'3 weeks' },
-                    { skill:'Boda Mechanics',       county:'Eldoret',  earn:'KES 20,000/mo', emoji:'🛵', time:'2 weeks' },
-                    { skill:'Hair Braiding',        county:'Nairobi',  earn:'KES 22,000/mo', emoji:'💇', time:'1 week' },
-                  ].map((item,i) => (
+                    { skill:'Solar Installation', county:'Kisumu',   earn:'KES 28,000/mo', emoji:'☀️', time:'2 weeks' },
+                    { skill:'Phone Repair',        county:'Kakamega', earn:'KES 22,000/mo', emoji:'📱', time:'10 days' },
+                    { skill:'Tailoring',           county:'Siaya',    earn:'KES 18,500/mo', emoji:'✂️', time:'3 weeks' },
+                    { skill:'Boda Mechanics',      county:'Eldoret',  earn:'KES 20,000/mo', emoji:'🛵', time:'2 weeks' },
+                    { skill:'Hair Braiding',       county:'Nairobi',  earn:'KES 22,000/mo', emoji:'💇', time:'1 week'  },
+                  ].map((item, i) => (
                     <div key={i} className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all
-                      ${i===0 ? 'bg-white/20 border border-white/20' : 'bg-white/5 hover:bg-white/10'}`}>
+                      ${i === 0 ? 'bg-white/20 border border-white/20' : 'bg-white/5 hover:bg-white/10'}`}>
                       <span className="text-2xl shrink-0">{item.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold text-sm truncate">{item.skill}</div>
@@ -333,7 +316,7 @@ export default function HomePage() {
         </div>
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {Array.from({length:8}).map((_,i) => <SkeletonCard key={i}/>)}
+            {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i}/>)}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -354,7 +337,7 @@ export default function HomePage() {
             <p className="text-stadi-gray mt-2 text-sm">No complicated sign-ups. No bank account. Just M-Pesa and a phone.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {HOW.map((step,i) => (
+            {HOW.map(step => (
               <div key={step.step} className="text-center">
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm text-3xl">
                   {step.emoji}
@@ -430,7 +413,7 @@ export default function HomePage() {
                 </div>
                 <div className="pt-1">
                   <div className="h-1.5 bg-white/10 rounded-full">
-                    <div className="h-full bg-stadi-orange rounded-full" style={{ width:`${(TESTIMONIALS[activeT].months/6)*100}%` }}/>
+                    <div className="h-full bg-stadi-orange rounded-full" style={{ width:`${(TESTIMONIALS[activeT].months / 6) * 100}%` }}/>
                   </div>
                   <div className="text-[10px] text-gray-500 mt-1">{TESTIMONIALS[activeT].months} of 6 months</div>
                 </div>
@@ -440,10 +423,10 @@ export default function HomePage() {
 
           {/* Selector tabs */}
           <div className="flex gap-3 justify-center">
-            {TESTIMONIALS.map((t,i) => (
+            {TESTIMONIALS.map((t, i) => (
               <button key={i} onClick={() => setActiveT(i)}
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all
-                  ${i===activeT ? 'bg-stadi-green text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}>
+                  ${i === activeT ? 'bg-stadi-green text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}>
                 {t.avatar} {t.name.split(' ')[0]}
               </button>
             ))}
@@ -452,7 +435,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          CATEGORY GRID
+          CATEGORY GRID — real images
       ══════════════════════════════════════════════════════ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
         <div className="text-center mb-8">
@@ -463,12 +446,7 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           {CATEGORIES.map(cat => (
-            <Link key={cat.slug} to={`/courses?category=${cat.slug}`}
-              className="group bg-white border border-gray-100 rounded-xl p-4 text-center hover:border-stadi-green hover:bg-stadi-green-light transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
-              <div className="text-3xl mb-2">{cat.emoji}</div>
-              <div className="font-semibold text-stadi-dark text-xs group-hover:text-stadi-green">{cat.name}</div>
-              <div className="text-[10px] text-stadi-orange font-semibold mt-1">{cat.earn}/mo</div>
-            </Link>
+            <CategoryCard key={cat.slug} category={cat} />
           ))}
         </div>
       </section>
@@ -485,7 +463,7 @@ export default function HomePage() {
             <p className="text-stadi-gray mt-2">Not adapted. Built from scratch for how Kenyans actually learn.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {WHY.map(({ icon:Icon, title, desc }) => (
+            {WHY.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex gap-4 p-5 rounded-2xl bg-white border border-gray-100 hover:border-stadi-green/30 hover:shadow-sm transition-all">
                 <div className="w-10 h-10 bg-stadi-green-light rounded-xl flex items-center justify-center shrink-0">
                   <Icon size={20} className="text-stadi-green"/>
@@ -528,7 +506,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          FINAL CTA — full bleed
+          FINAL CTA
       ══════════════════════════════════════════════════════ */}
       <section className="relative bg-gradient-to-r from-stadi-orange to-[#d4811a] py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10"
