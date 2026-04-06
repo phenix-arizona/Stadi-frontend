@@ -42,12 +42,12 @@ export default api;
 
 // ── Auth ──────────────────────────────────────────────────────
 export const auth = {
-  register:   (phone) => api.post('/auth/register', { phone }),
-  login:      (phone) => api.post('/auth/login', { phone }),
-  verifyOtp:  (phone, otp, referralCode) => api.post('/auth/verify-otp', { phone, otp, referralCode }),
-  refresh:    (refreshToken) => api.post('/auth/refresh', { refreshToken }),
-  logout:     () => api.post('/auth/logout'),
-  me:         () => api.get('/auth/me'),
+  register:  (phone)                     => api.post('/auth/register', { phone }),
+  login:     (phone)                     => api.post('/auth/login', { phone }),
+  verifyOtp: (phone, otp, referralCode)  => api.post('/auth/verify-otp', { phone, otp, referralCode }),
+  refresh:   (refreshToken)              => api.post('/auth/refresh', { refreshToken }),
+  logout:    ()                          => api.post('/auth/logout'),
+  me:        ()                          => api.get('/auth/me'),
 };
 
 // ── Courses ───────────────────────────────────────────────────
@@ -66,22 +66,26 @@ export const courses = {
 export const payments = {
   initiate: (courseId, phone) => api.post('/payments/initiate', { courseId, phone }),
   poll:     (id) => api.get(`/payments/poll/${id}`),
-  status:   (id) => api.get(`/payments/status/${id}`),
-  history:  () => api.get('/payments/my'),
+
+  // status returns { status, resultCode, resultDesc } so the frontend
+  // can surface specific M-Pesa error codes (1032 cancelled, 1037 timeout, etc.)
+  status: (id) => api.get(`/payments/status/${id}`),
+
+  history: () => api.get('/payments/my'),
 };
 
 // ── Progress ──────────────────────────────────────────────────
 export const progress = {
-  mark:           (lessonId, data) => api.post(`/progress/${lessonId}`, data),
-  byCourse:       (courseId) => api.get(`/progress/course/${courseId}`),
-  continuelearning: () => api.get('/progress/continue'),
+  mark:            (lessonId, data) => api.post(`/progress/${lessonId}`, data),
+  byCourse:        (courseId)       => api.get(`/progress/course/${courseId}`),
+  continuelearning: ()              => api.get('/progress/continue'),
 };
 
 // ── Assessments ───────────────────────────────────────────────
 export const assessments = {
-  submit: (courseId, answers) => api.post(`/assessments/${courseId}`, { answers }),
+  submit: (courseId, answers)               => api.post(`/assessments/${courseId}`, { answers }),
   quiz:   (courseId, quizId, selectedAnswer) => api.post(`/assessments/${courseId}/quiz/${quizId}`, { selectedAnswer }),
-  result: (courseId) => api.get(`/assessments/${courseId}`),
+  result: (courseId)                         => api.get(`/assessments/${courseId}`),
 };
 
 // ── Certificates ──────────────────────────────────────────────
@@ -111,9 +115,9 @@ export const referrals = {
 
 // ── Notifications ─────────────────────────────────────────────
 export const notifications = {
-  list:    () => api.get('/notifications'),
-  markRead:(id) => api.patch(`/notifications/${id}/read`),
-  readAll: () => api.patch('/notifications/read-all'),
+  list:     () => api.get('/notifications'),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  readAll:  () => api.patch('/notifications/read-all'),
 };
 
 // ── User ──────────────────────────────────────────────────────
@@ -146,30 +150,43 @@ export const adminAPI = {
 
 // ── Instructor ────────────────────────────────────────────────
 export const instructorAPI = {
-  dashboard:      ()               => api.get('/instructor/dashboard'),
-  // Course builder
-  buildData:      (courseId)       => api.get(`/instructor/courses/${courseId}/build`),
-  updateCourse:   (courseId, data) => api.patch(`/instructor/courses/${courseId}`, data),
-  submitCourse:   (courseId)       => api.post(`/instructor/courses/${courseId}/submit`),
-  // Modules
+  dashboard: () => api.get('/instructor/dashboard'),
+
+  // ── Course builder ──────────────────────────────────────
+  buildData:    (courseId)       => api.get(`/instructor/courses/${courseId}/build`),
+
+  // createCourse is used by onboarding wizard (POST /instructor/courses)
+  // updateCourse with id='new' is an alias that also creates via PATCH-or-POST logic
+  createCourse: (data)           => api.post('/instructor/courses', data),
+  updateCourse: (courseId, data) => courseId === 'new'
+    ? api.post('/instructor/courses', data)           // create
+    : api.patch(`/instructor/courses/${courseId}`, data), // update
+
+  submitCourse: (courseId)       => api.post(`/instructor/courses/${courseId}/submit`),
+
+  // ── Modules ─────────────────────────────────────────────
   createModule:   (courseId, data) => api.post(`/instructor/courses/${courseId}/modules`, data),
   updateModule:   (modId, data)    => api.patch(`/instructor/modules/${modId}`, data),
   deleteModule:   (modId)          => api.delete(`/instructor/modules/${modId}`),
   reorderModules: (courseId, order)=> api.post(`/instructor/courses/${courseId}/modules/reorder`, { order }),
-  // Lessons
-  createLesson:   (modId, data)    => api.post(`/instructor/modules/${modId}/lessons`, data),
-  updateLesson:   (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}`, data),
-  deleteLesson:   (lessonId)       => api.delete(`/instructor/lessons/${lessonId}`),
-  setVideo:       (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}/video`, data),
-  removeVideo:    (lessonId, lang) => api.delete(`/instructor/lessons/${lessonId}/video/${lang}`),
-  // Quizzes
-  getQuizzes:     (courseId)       => api.get(`/instructor/courses/${courseId}/quizzes`),
-  createQuiz:     (courseId, data) => api.post(`/instructor/courses/${courseId}/quizzes`, data),
-  updateQuiz:     (quizId, data)   => api.patch(`/instructor/quizzes/${quizId}`, data),
-  deleteQuiz:     (quizId)         => api.delete(`/instructor/quizzes/${quizId}`),
-  // Upload
-  uploadSig:      (params)         => api.get('/instructor/upload-signature', { params }),
-  // Earnings
-  earnings:       ()               => api.get('/payouts/earnings'),
-  payouts:        ()               => api.get('/payouts/my'),
+
+  // ── Lessons ─────────────────────────────────────────────
+  createLesson: (modId, data)    => api.post(`/instructor/modules/${modId}/lessons`, data),
+  updateLesson: (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}`, data),
+  deleteLesson: (lessonId)       => api.delete(`/instructor/lessons/${lessonId}`),
+  setVideo:     (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}/video`, data),
+  removeVideo:  (lessonId, lang) => api.delete(`/instructor/lessons/${lessonId}/video/${lang}`),
+
+  // ── Quizzes ─────────────────────────────────────────────
+  getQuizzes:  (courseId)       => api.get(`/instructor/courses/${courseId}/quizzes`),
+  createQuiz:  (courseId, data) => api.post(`/instructor/courses/${courseId}/quizzes`, data),
+  updateQuiz:  (quizId, data)   => api.patch(`/instructor/quizzes/${quizId}`, data),
+  deleteQuiz:  (quizId)         => api.delete(`/instructor/quizzes/${quizId}`),
+
+  // ── Upload ──────────────────────────────────────────────
+  uploadSig: (params) => api.get('/instructor/upload-signature', { params }),
+
+  // ── Earnings ────────────────────────────────────────────
+  earnings: () => api.get('/payouts/earnings'),
+  payouts:  () => api.get('/payouts/my'),
 };
