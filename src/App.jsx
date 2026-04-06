@@ -112,7 +112,7 @@ export default function App() {
         '@type': 'EducationalOrganization',
         name: 'Stadi Learning Platform',
         description: 'Vocational skills training for Kenya — 15 languages, offline access, M-Pesa payments',
-        url: 'https://stadi.co.ke',
+        url: 'https://stadi.ke',
         address: { '@type': 'PostalAddress', addressLocality: 'Kisumu', addressCountry: 'KE' },
         contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', telephone: '+254700000000' },
       })}} />

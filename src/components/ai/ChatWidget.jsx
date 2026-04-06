@@ -48,7 +48,7 @@ export default function AIChatWidget() {
       const reply = data.content?.[0]?.text || 'Sorry, I had trouble responding. Please try again!';
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Oops! Connection issue. Please try again or WhatsApp us at +254 700 000 000.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Oops! Connection issue. Please try again or WhatsApp us at +254 701901244.' }]);
     } finally {
       setLoading(false);
     }

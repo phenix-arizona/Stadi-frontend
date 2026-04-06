@@ -449,8 +449,8 @@ export function AboutPage() {
         <h3 className="font-bold text-stadi-dark text-lg mb-4">Get in Touch</h3>
         <div className="flex flex-wrap justify-center gap-6 text-sm text-stadi-gray">
           <div>📍 Kisumu City, Western Kenya</div>
-          <div>✉️ info@stadi.co.ke</div>
-          <div>📱 WhatsApp: +254 700 000 000</div>
+          <div>✉️ info@stadi.ke</div>
+          <div>📱 WhatsApp: +254 701901244</div>
           <a href="https://stadi.co.ke" className="text-stadi-green hover:underline">🌐 stadi.co.ke</a>
         </div>
       </div>

@@ -276,7 +276,7 @@ export default function EnrollmentModal({ isOpen, onClose, course }) {
             <h2 className="text-xl font-bold text-stadi-dark mb-2">Payment Not Completed</h2>
             <p className="text-stadi-gray text-sm mb-2">{error}</p>
             <p className="text-xs text-stadi-gray mb-6">
-              If M-Pesa was deducted but you see this screen, WhatsApp us at +254 700 000 000 with your name and phone number.
+              If M-Pesa was deducted but you see this screen, WhatsApp us at +254 701901244 with your name and phone number.
             </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => { setStep(STEPS.PHONE); setError(''); setPollCount(0); }}>
