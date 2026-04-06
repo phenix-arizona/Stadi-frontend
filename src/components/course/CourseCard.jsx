@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link }                     from 'react-router-dom';
-import { Heart, Clock, BookOpen, Users, TrendingUp, Star } from 'lucide-react';
+import { Heart, Clock, BookOpen, Users, TrendingUp } from 'lucide-react';
 import { Badge, SkeletonCard, StarRating, Button } from '../ui';
 import useAuthStore   from '../../store/auth.store';
 import { bookmarks }  from '../../lib/api';
@@ -33,7 +33,15 @@ const CATEGORY_IMAGES = {
   default:      'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=352&fit=crop&auto=format',
 };
 
-// ── Image thumbnail with category overlay label ───────────────
+// Small square version for the category label chip
+const CATEGORY_IMAGES_SM = Object.fromEntries(
+  Object.entries(CATEGORY_IMAGES).map(([k, v]) => [
+    k,
+    v.replace('w=600&h=352', 'w=32&h=32'),
+  ])
+);
+
+// ── Image thumbnail with gradient overlay ─────────────────────
 function ImageThumbnail({ course, slug }) {
   const src = CATEGORY_IMAGES[slug] || CATEGORY_IMAGES.default;
   return (
@@ -44,7 +52,6 @@ function ImageThumbnail({ course, slug }) {
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         loading="lazy"
       />
-      {/* Dark gradient at bottom so earn badge stays readable */}
       <div
         className="absolute inset-0"
         style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.45) 100%)' }}
@@ -53,7 +60,7 @@ function ImageThumbnail({ course, slug }) {
   );
 }
 
-// ── Progress strip (enrolled view) ───────────────────────────
+// ── Progress strip (enrolled view) ────────────────────────────
 function ProgressStrip({ pct }) {
   if (!pct) return null;
   return (
@@ -93,6 +100,9 @@ export function CourseCard({ course, showEarnBadge = true, enrolled = false, pro
       else            { await bookmarks.add(course.id);    setBookmarked(true);  }
     } finally { setBLoading(false); }
   };
+
+  // Category label image (small square)
+  const categoryImgSm = CATEGORY_IMAGES_SM[slug] || CATEGORY_IMAGES_SM.default;
 
   return (
     <div className="card group hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
@@ -152,9 +162,18 @@ export function CourseCard({ course, showEarnBadge = true, enrolled = false, pro
 
       {/* ── Content ── */}
       <div className="p-4">
-        {/* Category */}
-        <div className="text-xs text-stadi-green font-semibold uppercase tracking-wide mb-1">
-          {course.categories?.icon_emoji} {course.categories?.name}
+
+        {/* Category label — small image + name, no emoji */}
+        <div className="flex items-center gap-1.5 mb-1">
+          <img
+            src={categoryImgSm}
+            alt={course.categories?.name || ''}
+            className="w-4 h-4 rounded object-cover shrink-0"
+            loading="lazy"
+          />
+          <span className="text-xs text-stadi-green font-semibold uppercase tracking-wide">
+            {course.categories?.name}
+          </span>
         </div>
 
         {/* Title */}
@@ -220,8 +239,9 @@ export function CourseCard({ course, showEarnBadge = true, enrolled = false, pro
 
         {/* Weekly social proof */}
         {course.weeklyEnrolments > 0 && (
-          <p className="text-[10px] text-stadi-orange font-medium mt-2">
-            🔥 {course.weeklyEnrolments} students enrolled this week
+          <p className="text-[10px] text-stadi-orange font-medium mt-2 flex items-center gap-1">
+            <TrendingUp size={10} />
+            {course.weeklyEnrolments} students enrolled this week
           </p>
         )}
       </div>
@@ -241,7 +261,13 @@ export function CourseGrid({ courses, loading, emptyMessage }) {
   if (!courses?.length) {
     return (
       <div className="text-center py-16">
-        <div className="text-5xl mb-3">📭</div>
+        <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-3">
+          <img
+            src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=64&h=64&fit=crop&auto=format"
+            alt="No courses"
+            className="w-full h-full object-cover opacity-40"
+          />
+        </div>
         <p className="text-stadi-gray">{emptyMessage || 'No courses found.'}</p>
       </div>
     );

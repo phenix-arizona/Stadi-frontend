@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowRight, Play, TrendingUp, Users, Award, ChevronRight,
-  MapPin, CheckCircle, Zap, Globe, Wifi, Star,
-  Clock, Shield, Smartphone, BadgeCheck, Flame
+  ArrowRight, Play, TrendingUp, Users, ChevronRight,
+  MapPin, Globe, Wifi, Star, Clock,
+  Smartphone, BadgeCheck,
+  GraduationCap, DollarSign, MessageCircle, Navigation,
+  Search, CreditCard, Download, Trophy,
 } from 'lucide-react';
 import { courses as coursesAPI } from '../lib/api';
 import useAuthStore from '../store/auth.store';
@@ -12,39 +14,52 @@ import { CourseCard } from '../components/course/CourseCard';
 import { SkeletonCard } from '../components/ui';
 import { LOGO_FULL } from '../assets/logo';
 
+// ── Person avatar photos (Unsplash faces) ─────────────────────
+const AVATARS = {
+  'Achieng O.':      'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=80&h=80&fit=crop&crop=face&auto=format',
+  'Kamau N.':        'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=80&h=80&fit=crop&crop=face&auto=format',
+  'Wanjiku M.':      'https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=80&h=80&fit=crop&crop=face&auto=format',
+  'Ochieng A.':      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face&auto=format',
+  'Chebet R.':       'https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop&crop=face&auto=format',
+  'Njoki W.':        'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80&h=80&fit=crop&crop=face&auto=format',
+  'Achieng Otieno':  'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=96&h=96&fit=crop&crop=face&auto=format',
+  'Nyongesa Wafula': 'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=96&h=96&fit=crop&crop=face&auto=format',
+  'Wanjiku Muthoni': 'https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=96&h=96&fit=crop&crop=face&auto=format',
+};
+
 // ── Data ──────────────────────────────────────────────────────
 const TICKER = [
-  { avatar:'👩🏿', name:'Achieng O.',  county:'Kisumu',   skill:'Solar Installation', earned:'KES 28,000/mo' },
-  { avatar:'👨🏿', name:'Kamau N.',    county:'Kakamega', skill:'Phone Repair',        earned:'KES 22,000/mo' },
-  { avatar:'👩🏾', name:'Wanjiku M.', county:'Siaya',    skill:'Tailoring',           earned:'KES 18,500/mo' },
-  { avatar:'👨🏿', name:'Ochieng A.', county:'Homa Bay', skill:'Fish Processing',     earned:'KES 15,000/mo' },
-  { avatar:'👨🏿', name:'Chebet R.',  county:'Eldoret',  skill:'Boda Mechanics',      earned:'KES 20,000/mo' },
-  { avatar:'👩🏾', name:'Njoki W.',   county:'Muranga',  skill:'Hair Braiding',       earned:'KES 17,000/mo' },
+  { name:'Achieng O.',  county:'Kisumu',   skill:'Solar Installation', earned:'KES 28,000/mo' },
+  { name:'Kamau N.',    county:'Kakamega', skill:'Phone Repair',        earned:'KES 22,000/mo' },
+  { name:'Wanjiku M.', county:'Siaya',    skill:'Tailoring',           earned:'KES 18,500/mo' },
+  { name:'Ochieng A.', county:'Homa Bay', skill:'Fish Processing',     earned:'KES 15,000/mo' },
+  { name:'Chebet R.',  county:'Eldoret',  skill:'Boda Mechanics',      earned:'KES 20,000/mo' },
+  { name:'Njoki W.',   county:'Muranga',  skill:'Hair Braiding',       earned:'KES 17,000/mo' },
 ];
 
 const STATS = [
-  { value:'5,000+',  label:'Kenyans earning', icon:'🎓' },
-  { value:'KES 28M', label:'Paid to graduates', icon:'💰' },
-  { value:'42',      label:'Local languages', icon:'🗣️' },
-  { value:'47',      label:'Counties reached', icon:'📍' },
+  { value:'5,000+',  label:'Kenyans earning',  Icon: GraduationCap },
+  { value:'KES 28M', label:'Paid to graduates', Icon: DollarSign    },
+  { value:'42',      label:'Local languages',   Icon: MessageCircle  },
+  { value:'47',      label:'Counties reached',  Icon: Navigation     },
 ];
 
 const TESTIMONIALS = [
   {
     name:'Achieng Otieno', county:'Kisumu', skill:'Solar Installation',
-    earned:'KES 28,000/mo', avatar:'👩🏿', months:3,
+    earned:'KES 28,000/mo', months:3,
     before:'Unemployed, Form 4 leaver', after:'Solar technician + own business',
     quote:'I finished the solar course in 2 weeks. Three days after getting my certificate, I landed my first installation job. I now earn more than I ever imagined.',
   },
   {
     name:'Nyongesa Wafula', county:'Kakamega', skill:'Phone Repair',
-    earned:'KES 22,000/mo', avatar:'👨🏿', months:2,
+    earned:'KES 22,000/mo', months:2,
     before:'Informal phone fixer, no certificate', after:'Certified technician, KES 22K/mo',
     quote:'I used to fix phones with no training and customers haggled my prices. After Stadi, I got certified and doubled my income. The certificate changed everything.',
   },
   {
     name:'Wanjiku Muthoni', county:'Kiambu', skill:'Tailoring',
-    earned:'KES 18,500/mo', avatar:'👩🏾', months:4,
+    earned:'KES 18,500/mo', months:4,
     before:'Stay-at-home mother of three', after:'Tailoring business owner',
     quote:'TVET college was impossible for me as a mother. Stadi let me learn in Swahili, on my phone, during nap time. I now run my own tailoring business from home.',
   },
@@ -63,23 +78,69 @@ const CATEGORIES = [
   { name:'Business',     slug:'business',     earn:'KES 10K–30K', image:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=220&fit=crop&auto=format' },
 ];
 
+// HOW steps — image thumbnails instead of emojis
 const HOW = [
-  { step:'1', emoji:'👀', title:'Browse free',    desc:"Explore 35 skills. See exactly what you'll earn before spending a shilling." },
-  { step:'2', emoji:'💳', title:'Pay via M-Pesa', desc:'From KES 150. One tap. No bank, no card, no hassle.' },
-  { step:'3', emoji:'📱', title:'Learn offline',  desc:'Download once on Wi-Fi. Watch anytime — no data needed.' },
-  { step:'4', emoji:'🏆', title:'Get certified',  desc:'Pass the test, earn your KNQA-aligned certificate, show it to clients.' },
+  {
+    step:'1', Icon: Search, title:'Browse free',
+    image:'https://images.unsplash.com/photo-1555421689-491a97ff2040?w=120&h=120&fit=crop&auto=format',
+    desc:"Explore 35 skills. See exactly what you'll earn before spending a shilling.",
+  },
+  {
+    step:'2', Icon: CreditCard, title:'Pay via M-Pesa',
+    image:'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=120&fit=crop&auto=format',
+    desc:'From KES 150. One tap. No bank, no card, no hassle.',
+  },
+  {
+    step:'3', Icon: Download, title:'Learn offline',
+    image:'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=120&h=120&fit=crop&auto=format',
+    desc:'Download once on Wi-Fi. Watch anytime — no data needed.',
+  },
+  {
+    step:'4', Icon: Trophy, title:'Get certified',
+    image:'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=120&h=120&fit=crop&auto=format',
+    desc:'Pass the test, earn your KNQA-aligned certificate, show it to clients.',
+  },
+];
+
+// Income proof rows — small category images instead of emojis
+const INCOME_ROWS = [
+  { skill:'Solar Installation', county:'Kisumu',   earn:'KES 28,000/mo', time:'2 weeks', image:'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=56&h=56&fit=crop&auto=format' },
+  { skill:'Phone Repair',        county:'Kakamega', earn:'KES 22,000/mo', time:'10 days', image:'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=56&h=56&fit=crop&auto=format' },
+  { skill:'Tailoring',           county:'Siaya',    earn:'KES 18,500/mo', time:'3 weeks', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=56&h=56&fit=crop&auto=format' },
+  { skill:'Boda Mechanics',      county:'Eldoret',  earn:'KES 20,000/mo', time:'2 weeks', image:'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=56&h=56&fit=crop&auto=format' },
+  { skill:'Hair Braiding',       county:'Nairobi',  earn:'KES 22,000/mo', time:'1 week',  image:'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=56&h=56&fit=crop&auto=format' },
 ];
 
 const WHY = [
-  { icon:Globe,     title:'15 local languages',        desc:'Dholuo, Luhya, Kikuyu, Kalenjin and 11 more. No language barrier.' },
-  { icon:Wifi,      title:'Offline — no data bill',    desc:'Download on Wi-Fi, study without data. Built for rural Kenya.' },
-  { icon:TrendingUp,title:'Every course shows earnings',desc:'Real income data from graduates in your county before you pay.' },
-  { icon:BadgeCheck,title:'KNQA-aligned certificates', desc:"Recognised by employers. Backed by Kenya's qualifications framework." },
-  { icon:Smartphone,title:'M-Pesa, KES 150',           desc:'No bank account needed. Pay the same way you pay for everything else.' },
-  { icon:Users,     title:'Kenyan instructors',         desc:'Learn from artisans who know local tools, suppliers, and market rates.' },
+  { icon:Globe,     title:'15 local languages',         desc:'Dholuo, Luhya, Kikuyu, Kalenjin and 11 more. No language barrier.' },
+  { icon:Wifi,      title:'Offline — no data bill',     desc:'Download on Wi-Fi, study without data. Built for rural Kenya.' },
+  { icon:TrendingUp,title:'Every course shows earnings', desc:'Real income data from graduates in your county before you pay.' },
+  { icon:BadgeCheck,title:'KNQA-aligned certificates',  desc:"Recognised by employers. Backed by Kenya's qualifications framework." },
+  { icon:Smartphone,title:'M-Pesa, KES 150',            desc:'No bank account needed. Pay the same way you pay for everything else.' },
+  { icon:Users,     title:'Kenyan instructors',          desc:'Learn from artisans who know local tools, suppliers, and market rates.' },
 ];
 
-// ── Category Card ─────────────────────────────────────────────
+// ── Avatar component ──────────────────────────────────────────
+function Avatar({ name, size = 32, className = '' }) {
+  const src = AVATARS[name];
+  const initials = name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+  return src ? (
+    <img
+      src={src} alt={name} loading="lazy"
+      className={`rounded-full object-cover border-2 border-white ${className}`}
+      style={{ width: size, height: size, minWidth: size }}
+    />
+  ) : (
+    <div
+      className={`rounded-full bg-stadi-orange/30 border-2 border-white flex items-center justify-center text-white font-bold ${className}`}
+      style={{ width: size, height: size, minWidth: size, fontSize: size * 0.35 }}
+    >
+      {initials}
+    </div>
+  );
+}
+
+// ── Category card ─────────────────────────────────────────────
 function CategoryCard({ category }) {
   return (
     <Link
@@ -121,7 +182,6 @@ export default function HomePage() {
   });
   const featured = featuredData?.data || [];
 
-  // Rotate ticker
   useEffect(() => {
     const t = setInterval(() => setTickerIdx(i => (i + 1) % TICKER.length), 2800);
     return () => clearInterval(t);
@@ -137,12 +197,9 @@ export default function HomePage() {
       ══════════════════════════════════════════════════════ */}
       <section className="relative bg-gradient-to-br from-[#0d4a2f] via-[#1A6B4A] to-[#1e7a55] min-h-[92vh] flex items-center overflow-hidden">
 
-        {/* Background texture */}
         <div className="absolute inset-0 opacity-[0.07]"
           style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
         />
-
-        {/* Decorative circles */}
         <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-stadi-orange/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-20 w-[400px] h-[400px] bg-white/5 rounded-full blur-3xl" />
 
@@ -151,12 +208,13 @@ export default function HomePage() {
 
             {/* LEFT */}
             <div>
-              {/* Live ticker pill */}
-              <div className="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-7 transition-all duration-500">
+              {/* Live ticker pill — avatar photo */}
+              <div className="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-2 mb-7 transition-all duration-500">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-stadi-orange opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-stadi-orange" />
                 </span>
+                <Avatar name={tick.name} size={24} className="border border-white/40" />
                 <span className="text-white/90 text-sm">
                   <span className="font-semibold">{tick.name}</span>
                   <span className="text-white/60"> · {tick.county} · </span>
@@ -164,7 +222,6 @@ export default function HomePage() {
                 </span>
               </div>
 
-              {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-5"
                 style={{ fontFamily:'Playfair Display' }}>
                 Turn a Skill Into
@@ -183,7 +240,6 @@ export default function HomePage() {
                 </span>
               </p>
 
-              {/* Search */}
               <form
                 onSubmit={e => {
                   e.preventDefault();
@@ -203,12 +259,11 @@ export default function HomePage() {
                 </button>
               </form>
 
-              {/* CTAs */}
               <div className="flex flex-wrap gap-3 mb-8">
                 {!isLoggedIn && (
                   <button onClick={openAuth}
                     className="flex items-center gap-2 bg-white text-stadi-green font-bold px-6 py-3.5 rounded-xl text-sm hover:bg-gray-50 transition-all active:scale-95 shadow-lg">
-                    🆓 Start Free — Browse All Courses
+                    Start Free — Browse All Courses
                   </button>
                 )}
                 <Link to="/courses">
@@ -218,43 +273,45 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Trust row */}
+              {/* Trust row — real avatar photos */}
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <div className="flex -space-x-2">
-                  {['👨🏿','👩🏾','👨🏿','👩🏿','👨🏾'].map((e, i) => (
-                    <span key={i} className="w-8 h-8 rounded-full bg-stadi-orange/30 border-2 border-white flex items-center justify-center text-sm">{e}</span>
+                  {TICKER.slice(0, 5).map((t, i) => (
+                    <Avatar key={i} name={t.name} size={32} />
                   ))}
                 </div>
                 <div className="text-sm text-white/80">
                   <strong className="text-white">5,000+</strong> Kenyans earning with Stadi
                 </div>
-                <div className="flex items-center gap-1">
-                  {'★★★★★'.split('').map((s, i) => <span key={i} className="text-stadi-orange text-sm">{s}</span>)}
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} size={13} className="text-stadi-orange" fill="currentColor" />
+                  ))}
                   <span className="text-white/60 text-xs ml-1">4.8/5</span>
                 </div>
               </div>
             </div>
 
-            {/* RIGHT — Income proof card */}
+            {/* RIGHT — Income proof card with category images */}
             <div className="hidden lg:block">
               <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-white/70 text-xs uppercase tracking-widest font-semibold">
-                    📈 Graduate Earnings · Kenya
+                  <p className="text-white/70 text-xs uppercase tracking-widest font-semibold flex items-center gap-1.5">
+                    <TrendingUp size={12} className="text-stadi-orange" />
+                    Graduate Earnings · Kenya
                   </p>
                   <span className="bg-stadi-orange/20 text-stadi-orange text-[10px] font-bold px-2 py-1 rounded-full">VERIFIED</span>
                 </div>
                 <div className="space-y-3">
-                  {[
-                    { skill:'Solar Installation', county:'Kisumu',   earn:'KES 28,000/mo', emoji:'☀️', time:'2 weeks' },
-                    { skill:'Phone Repair',        county:'Kakamega', earn:'KES 22,000/mo', emoji:'📱', time:'10 days' },
-                    { skill:'Tailoring',           county:'Siaya',    earn:'KES 18,500/mo', emoji:'✂️', time:'3 weeks' },
-                    { skill:'Boda Mechanics',      county:'Eldoret',  earn:'KES 20,000/mo', emoji:'🛵', time:'2 weeks' },
-                    { skill:'Hair Braiding',       county:'Nairobi',  earn:'KES 22,000/mo', emoji:'💇', time:'1 week'  },
-                  ].map((item, i) => (
-                    <div key={i} className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all
+                  {INCOME_ROWS.map((item, i) => (
+                    <div key={i} className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all
                       ${i === 0 ? 'bg-white/20 border border-white/20' : 'bg-white/5 hover:bg-white/10'}`}>
-                      <span className="text-2xl shrink-0">{item.emoji}</span>
+                      <img
+                        src={item.image}
+                        alt={item.skill}
+                        className="w-10 h-10 rounded-xl object-cover shrink-0"
+                        loading="lazy"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold text-sm truncate">{item.skill}</div>
                         <div className="text-white/50 text-xs flex items-center gap-1.5">
@@ -276,7 +333,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Wave */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="white" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
             <path d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z"/>
@@ -285,13 +341,17 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          STATS BAR
+          STATS BAR — Lucide icons
       ══════════════════════════════════════════════════════ */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {STATS.map(s => (
             <div key={s.label}>
-              <div className="text-3xl mb-1">{s.icon}</div>
+              <div className="flex justify-center mb-2">
+                <div className="w-10 h-10 rounded-xl bg-stadi-green-light flex items-center justify-center">
+                  <s.Icon size={20} className="text-stadi-green" />
+                </div>
+              </div>
               <div className="text-2xl font-bold text-stadi-green">{s.value}</div>
               <div className="text-xs text-stadi-gray mt-0.5">{s.label}</div>
             </div>
@@ -326,7 +386,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          HOW IT WORKS
+          HOW IT WORKS — step images
       ══════════════════════════════════════════════════════ */}
       <section className="bg-stadi-green-light py-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -339,8 +399,13 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {HOW.map(step => (
               <div key={step.step} className="text-center">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm text-3xl">
-                  {step.emoji}
+                <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4 shadow-sm">
+                  <img
+                    src={step.image}
+                    alt={step.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
                 <div className="text-stadi-green font-bold text-xs uppercase tracking-wider mb-1">Step {step.step}</div>
                 <h3 className="font-bold text-stadi-dark text-sm mb-1">{step.title}</h3>
@@ -366,7 +431,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          TESTIMONIALS
+          TESTIMONIALS — real avatar photos
       ══════════════════════════════════════════════════════ */}
       <section className="bg-stadi-dark py-16 overflow-hidden">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -377,7 +442,6 @@ export default function HomePage() {
             <p className="text-gray-400 mt-2 text-sm">Not stock photos — graduates from across all 47 counties</p>
           </div>
 
-          {/* Active testimonial */}
           <div className="bg-white/5 rounded-2xl p-6 md:p-8 border border-white/10 mb-5">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
@@ -389,9 +453,7 @@ export default function HomePage() {
                   "{TESTIMONIALS[activeT].quote}"
                 </blockquote>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-stadi-green rounded-full flex items-center justify-center text-2xl">
-                    {TESTIMONIALS[activeT].avatar}
-                  </div>
+                  <Avatar name={TESTIMONIALS[activeT].name} size={48} />
                   <div>
                     <div className="text-white font-bold">{TESTIMONIALS[activeT].name}</div>
                     <div className="text-gray-400 text-xs flex items-center gap-1">
@@ -421,13 +483,14 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Selector tabs */}
-          <div className="flex gap-3 justify-center">
+          {/* Selector tabs — avatar photos */}
+          <div className="flex gap-3 justify-center flex-wrap">
             {TESTIMONIALS.map((t, i) => (
               <button key={i} onClick={() => setActiveT(i)}
-                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all
                   ${i === activeT ? 'bg-stadi-green text-white' : 'bg-white/10 text-gray-400 hover:bg-white/20'}`}>
-                {t.avatar} {t.name.split(' ')[0]}
+                <Avatar name={t.name} size={20} className="border-white/40" />
+                {t.name.split(' ')[0]}
               </button>
             ))}
           </div>
@@ -435,7 +498,7 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          CATEGORY GRID — real images
+          CATEGORY GRID
       ══════════════════════════════════════════════════════ */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
         <div className="text-center mb-8">
@@ -513,7 +576,14 @@ export default function HomePage() {
           style={{ backgroundImage:`url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")` }}
         />
         <div className="relative max-w-3xl mx-auto px-4 text-center text-white">
-          <div className="text-4xl mb-4">🇰🇪</div>
+          {/* Kenya flag image */}
+          <div className="flex justify-center mb-4">
+            <img
+              src="https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=80&h=52&fit=crop&auto=format"
+              alt="Kenya"
+              className="rounded-lg shadow-lg"
+            />
+          </div>
           <h2 className="text-3xl font-bold mb-3" style={{ fontFamily:'Playfair Display' }}>
             Your skill. Your income. Starting today.
           </h2>
@@ -538,7 +608,7 @@ export default function HomePage() {
             )}
             <a href="https://wa.me/254700000000" target="_blank" rel="noreferrer">
               <button className="border-2 border-white text-white font-semibold px-6 py-4 rounded-xl text-base hover:bg-white/10 transition-all">
-                💬 Chat on WhatsApp
+                Chat on WhatsApp
               </button>
             </a>
           </div>
