@@ -568,6 +568,41 @@ export default function HomePage() {
         </div>
       </section>
 
+
+      {/* ══════════════════════════════════════════════════════
+          CAREERS STRIP
+      ══════════════════════════════════════════════════════ */}
+      <section className="bg-stadi-dark py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left">
+              <div className="text-xs font-bold text-stadi-green uppercase tracking-widest mb-2">
+                We're hiring
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Playfair Display' }}>
+                Build the Platform That Changes Kenya's Workforce
+              </h2>
+              <p className="text-white/60 text-sm max-w-lg">
+                Engineers, content producers, language specialists, community managers.
+                Join a small team with a massive mission — in 15 Kenyan languages.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+              <Link to="/careers">
+                <button className="bg-stadi-green text-white font-bold px-6 py-3.5 rounded-xl text-sm hover:bg-opacity-90 transition-all whitespace-nowrap">
+                  View Open Roles <ArrowRight size={15} className="inline ml-1"/>
+                </button>
+              </Link>
+              <a href="mailto:felix@stadi.ke?subject=Open Application — Stadi">
+                <button className="border-2 border-white/20 text-white/80 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 transition-all whitespace-nowrap">
+                  Send Open Application
+                </button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ══════════════════════════════════════════════════════
           FINAL CTA
       ══════════════════════════════════════════════════════ */}
@@ -606,7 +641,7 @@ export default function HomePage() {
                 Start Free — No Card Needed <ArrowRight size={18} className="inline ml-1"/>
               </button>
             )}
-            <a href="https://wa.me/254700000000" target="_blank" rel="noreferrer">
+            <a href="https://wa.me/254701901244" target="_blank" rel="noreferrer">
               <button className="border-2 border-white text-white font-semibold px-6 py-4 rounded-xl text-base hover:bg-white/10 transition-all">
                 Chat on WhatsApp
               </button>

@@ -903,7 +903,7 @@ export default function AdminPage() {
           <div className="bg-stadi-green-light rounded-xl p-3 space-y-1">
             <p className="text-xs text-stadi-green font-semibold">What happens when you add an instructor:</p>
             <p className="text-xs text-gray-600">• Their account role changes to <strong>instructor</strong></p>
-            <p className="text-xs text-gray-600">• They can log into stadi.co.ke and access the Instructor Portal at <strong>/instructor</strong></p>
+            <p className="text-xs text-gray-600">• They can log into stadi.ke and access the Instructor Portal at <strong>/instructor</strong></p>
             <p className="text-xs text-gray-600">• They can create, submit, and earn from courses</p>
             <p className="text-xs text-gray-600">• They <strong>cannot</strong> access the Admin dashboard</p>
           </div>

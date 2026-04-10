@@ -42,12 +42,12 @@ export default api;
 
 // ── Auth ──────────────────────────────────────────────────────
 export const auth = {
-  register:  (phone)                     => api.post('/auth/register', { phone }),
-  login:     (phone)                     => api.post('/auth/login', { phone }),
-  verifyOtp: (phone, otp, referralCode)  => api.post('/auth/verify-otp', { phone, otp, referralCode }),
-  refresh:   (refreshToken)              => api.post('/auth/refresh', { refreshToken }),
-  logout:    ()                          => api.post('/auth/logout'),
-  me:        ()                          => api.get('/auth/me'),
+  register:  (phone) => api.post('/auth/register', { phone }),
+  login:     (phone) => api.post('/auth/login', { phone }),
+  verifyOtp: (phone, otp, referralCode) => api.post('/auth/verify-otp', { phone, otp, referralCode }),
+  refresh:   (refreshToken) => api.post('/auth/refresh', { refreshToken }),
+  logout:    () => api.post('/auth/logout'),
+  me:        () => api.get('/auth/me'),
 };
 
 // ── Courses ───────────────────────────────────────────────────
@@ -65,27 +65,24 @@ export const courses = {
 // ── Payments ──────────────────────────────────────────────────
 export const payments = {
   initiate: (courseId, phone) => api.post('/payments/initiate', { courseId, phone }),
-  poll:     (id) => api.get(`/payments/poll/${id}`),
-
-  // status returns { status, resultCode, resultDesc } so the frontend
-  // can surface specific M-Pesa error codes (1032 cancelled, 1037 timeout, etc.)
-  status: (id) => api.get(`/payments/status/${id}`),
-
-  history: () => api.get('/payments/my'),
+  retry:    (paymentId)       => api.post(`/payments/retry/${paymentId}`),
+  poll:     (id)              => api.get(`/payments/poll/${id}`),
+  status:   (id)              => api.get(`/payments/status/${id}`),
+  history:  ()                => api.get('/payments/my'),
 };
 
 // ── Progress ──────────────────────────────────────────────────
 export const progress = {
-  mark:            (lessonId, data) => api.post(`/progress/${lessonId}`, data),
-  byCourse:        (courseId)       => api.get(`/progress/course/${courseId}`),
-  continuelearning: ()              => api.get('/progress/continue'),
+  mark:             (lessonId, data) => api.post(`/progress/${lessonId}`, data),
+  byCourse:         (courseId) => api.get(`/progress/course/${courseId}`),
+  continuelearning: () => api.get('/progress/continue'),
 };
 
 // ── Assessments ───────────────────────────────────────────────
 export const assessments = {
-  submit: (courseId, answers)               => api.post(`/assessments/${courseId}`, { answers }),
+  submit: (courseId, answers) => api.post(`/assessments/${courseId}`, { answers }),
   quiz:   (courseId, quizId, selectedAnswer) => api.post(`/assessments/${courseId}/quiz/${quizId}`, { selectedAnswer }),
-  result: (courseId)                         => api.get(`/assessments/${courseId}`),
+  result: (courseId) => api.get(`/assessments/${courseId}`),
 };
 
 // ── Certificates ──────────────────────────────────────────────
@@ -150,43 +147,63 @@ export const adminAPI = {
 
 // ── Instructor ────────────────────────────────────────────────
 export const instructorAPI = {
-  dashboard: () => api.get('/instructor/dashboard'),
-
-  // ── Course builder ──────────────────────────────────────
-  buildData:    (courseId)       => api.get(`/instructor/courses/${courseId}/build`),
-
-  // createCourse is used by onboarding wizard (POST /instructor/courses)
-  // updateCourse with id='new' is an alias that also creates via PATCH-or-POST logic
-  createCourse: (data)           => api.post('/instructor/courses', data),
-  updateCourse: (courseId, data) => courseId === 'new'
-    ? api.post('/instructor/courses', data)           // create
-    : api.patch(`/instructor/courses/${courseId}`, data), // update
-
-  submitCourse: (courseId)       => api.post(`/instructor/courses/${courseId}/submit`),
-
-  // ── Modules ─────────────────────────────────────────────
+  dashboard:      ()               => api.get('/instructor/dashboard'),
+  buildData:      (courseId)       => api.get(`/instructor/courses/${courseId}/build`),
+  updateCourse:   (courseId, data) => api.patch(`/instructor/courses/${courseId}`, data),
+  submitCourse:   (courseId)       => api.post(`/instructor/courses/${courseId}/submit`),
   createModule:   (courseId, data) => api.post(`/instructor/courses/${courseId}/modules`, data),
   updateModule:   (modId, data)    => api.patch(`/instructor/modules/${modId}`, data),
   deleteModule:   (modId)          => api.delete(`/instructor/modules/${modId}`),
   reorderModules: (courseId, order)=> api.post(`/instructor/courses/${courseId}/modules/reorder`, { order }),
+  createLesson:   (modId, data)    => api.post(`/instructor/modules/${modId}/lessons`, data),
+  updateLesson:   (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}`, data),
+  deleteLesson:   (lessonId)       => api.delete(`/instructor/lessons/${lessonId}`),
+  setVideo:       (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}/video`, data),
+  removeVideo:    (lessonId, lang) => api.delete(`/instructor/lessons/${lessonId}/video/${lang}`),
+  getQuizzes:     (courseId)       => api.get(`/instructor/courses/${courseId}/quizzes`),
+  createQuiz:     (courseId, data) => api.post(`/instructor/courses/${courseId}/quizzes`, data),
+  updateQuiz:     (quizId, data)   => api.patch(`/instructor/quizzes/${quizId}`, data),
+  deleteQuiz:     (quizId)         => api.delete(`/instructor/quizzes/${quizId}`),
+  uploadSig:      (params)         => api.get('/instructor/upload-signature', { params }),
+  earnings:       ()               => api.get('/payouts/earnings'),
+  payouts:        ()               => api.get('/payouts/my'),
+};
 
-  // ── Lessons ─────────────────────────────────────────────
-  createLesson: (modId, data)    => api.post(`/instructor/modules/${modId}/lessons`, data),
-  updateLesson: (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}`, data),
-  deleteLesson: (lessonId)       => api.delete(`/instructor/lessons/${lessonId}`),
-  setVideo:     (lessonId, data) => api.patch(`/instructor/lessons/${lessonId}/video`, data),
-  removeVideo:  (lessonId, lang) => api.delete(`/instructor/lessons/${lessonId}/video/${lang}`),
+// ── Finance ───────────────────────────────────────────────────
+export const financeAPI = {
+  summary:         (period) => api.get('/finance/summary', { params: { period } }),
+  revenueByMonth:  () => api.get('/finance/revenue-by-month'),
+  revenueByCourse: () => api.get('/finance/revenue-by-course'),
+  transactions:    (params) => api.get('/finance/transactions', { params }),
+  payouts:         (params) => api.get('/finance/payouts', { params }),
+  approvePayout:   (id) => api.post(`/finance/payouts/${id}/approve`),
+  rejectPayout:    (id, reason) => api.post(`/finance/payouts/${id}/reject`, { reason }),
+  records:         (params) => api.get('/finance/records', { params }),
+  addRecord:       (data) => api.post('/finance/records', data),
+  exportCsv:       (params) => api.get('/finance/export', { params, responseType: 'blob' }),
+};
 
-  // ── Quizzes ─────────────────────────────────────────────
-  getQuizzes:  (courseId)       => api.get(`/instructor/courses/${courseId}/quizzes`),
-  createQuiz:  (courseId, data) => api.post(`/instructor/courses/${courseId}/quizzes`, data),
-  updateQuiz:  (quizId, data)   => api.patch(`/instructor/quizzes/${quizId}`, data),
-  deleteQuiz:  (quizId)         => api.delete(`/instructor/quizzes/${quizId}`),
+// ── HR ────────────────────────────────────────────────────────
+export const hrAPI = {
+  summary:          () => api.get('/hr/summary'),
+  staff:            (params) => api.get('/hr/staff', { params }),
+  updateStaff:      (id, data) => api.patch(`/hr/staff/${id}`, data),
+  addStaff:         (data) => api.post('/hr/staff', data),
+  leave:            (params) => api.get('/hr/leave', { params }),
+  approveLeave:     (id) => api.post(`/hr/leave/${id}/approve`),
+  rejectLeave:      (id, reason) => api.post(`/hr/leave/${id}/reject`, { reason }),
+  requestLeave:     (data) => api.post('/hr/leave/request', data),
+  jobs:             () => api.get('/hr/jobs'),
+  createJob:        (data) => api.post('/hr/jobs', data),
+  updateJob:        (id, data) => api.patch(`/hr/jobs/${id}`, data),
+  closeJob:         (id) => api.delete(`/hr/jobs/${id}`),
+  applications:     (params) => api.get('/hr/applications', { params }),
+  updateApplication:(id, data) => api.patch(`/hr/applications/${id}`, data),
+};
 
-  // ── Upload ──────────────────────────────────────────────
-  uploadSig: (params) => api.get('/instructor/upload-signature', { params }),
-
-  // ── Earnings ────────────────────────────────────────────
-  earnings: () => api.get('/payouts/earnings'),
-  payouts:  () => api.get('/payouts/my'),
+// ── Careers (public) ──────────────────────────────────────────
+export const careersAPI = {
+  jobs:  (params) => api.get('/careers/jobs', { params }),
+  job:   (id) => api.get(`/careers/jobs/${id}`),
+  apply: (data) => api.post('/careers/apply', data),
 };

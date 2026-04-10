@@ -7,34 +7,58 @@ import AuthModal     from './components/auth/AuthModal';
 import AIChatWidget  from './components/ai/ChatWidget';
 import { ToastContainer } from './components/ui';
 
-// Pages
-import HomePage                          from './pages/Home';
-import CoursesPage                       from './pages/Courses';
-import { CourseDetailPage, AboutPage,
-         CertificateVerifyPage }         from './pages/CourseDetail';
-import DashboardPage                     from './pages/Dashboard';
+import HomePage          from './pages/Home';
+import CoursesPage       from './pages/Courses';
+import { CourseDetailPage, AboutPage } from './pages/CourseDetail';
+import DashboardPage     from './pages/Dashboard';
+import CareersPage       from './pages/Careers';
+import { MyCertificatesPage, CertificateVerifyPage } from './pages/Certificates';
 
-// Lazy pages
-const LearnPage     = React.lazy(() => import('./pages/Learn'));
-const ProfilePage   = React.lazy(() => import('./pages/Profile'));
-const AdminPage     = React.lazy(() => import('./pages/Admin'));
+const LearnPage      = React.lazy(() => import('./pages/Learn'));
+const ProfilePage    = React.lazy(() => import('./pages/Profile'));
+const AdminPage      = React.lazy(() => import('./pages/Admin'));
 const InstructorPage = React.lazy(() => import('./pages/Instructor'));
+const FinancePage    = React.lazy(() => import('./pages/Finance'));
+const HRPage         = React.lazy(() => import('./pages/HR'));
 
-// ── SEO meta helper ───────────────────────────────────────────
-function useSEO(title, description) {
-  useEffect(() => {
-    document.title = title ? `${title} | Stadi — Learn Skills. Start Earning.` : 'Stadi — Learn Skills. Start Earning. | Vocational Training Kenya';
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc && description) metaDesc.setAttribute('content', description);
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0,0); }, [pathname]);
+  return null;
+}
 
-    // OG tags
-    document.querySelector('meta[property="og:title"]')?.setAttribute('content', title || 'Stadi');
-    document.querySelector('meta[property="og:description"]')?.setAttribute('content', description || 'Learn practical vocational skills in 15 Kenyan languages. M-Pesa payments. Offline access. Earn from KES 150.');
-  }, [title, description]);
+function ProtectedRoute({ children }) {
+  const { isLoggedIn, openAuth } = useAuthStore();
+  useEffect(() => { if (!isLoggedIn) openAuth(); }, [isLoggedIn]);
+  if (!isLoggedIn) return null;
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const { user } = useAuthStore();
+  if (!['admin','super_admin'].includes(user?.role)) {
+    return <div className="text-center py-24"><p className="text-stadi-gray">Access denied.</p></div>;
+  }
+  return children;
+}
+
+function FinanceRoute({ children }) {
+  const { user } = useAuthStore();
+  if (!['finance','admin','super_admin'].includes(user?.role)) {
+    return <div className="text-center py-24"><p className="text-stadi-gray">Finance access required.</p></div>;
+  }
+  return children;
+}
+
+function HRRoute({ children }) {
+  const { user } = useAuthStore();
+  if (!['hr','admin','super_admin'].includes(user?.role)) {
+    return <div className="text-center py-24"><p className="text-stadi-gray">HR access required.</p></div>;
+  }
+  return children;
 }
 
 function NotFound() {
-  useSEO('Page Not Found');
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
       <div className="text-6xl mb-4">🔍</div>
@@ -45,78 +69,15 @@ function NotFound() {
   );
 }
 
-function ProtectedRoute({ children }) {
-  const { isLoggedIn, openAuth } = useAuthStore();
-  useEffect(() => { if (!isLoggedIn) openAuth(); }, [isLoggedIn]);
-  if (!isLoggedIn) return null;
-  return children;
-}
-
-// Spinner shown while session is being restored
-function RoleLoadingSpinner() {
-  return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-stadi-green border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-}
-
-function AdminRoute({ children }) {
-  const { user, isLoggedIn, isLoading, openAuth } = useAuthStore();
-
-  // Not logged in at all → prompt login
-  useEffect(() => { if (!isLoggedIn && !isLoading) openAuth(); }, [isLoggedIn, isLoading]);
-
-  // Still fetching the user profile → show spinner, not 404
-  if (isLoading || (isLoggedIn && !user)) return <RoleLoadingSpinner />;
-
-  // Logged in but wrong role
-  if (!isLoggedIn || !['admin', 'super_admin'].includes(user?.role)) return <NotFound />;
-
-  return children;
-}
-
-function InstructorRoute({ children }) {
-  const { user, isLoggedIn, isLoading, openAuth } = useAuthStore();
-
-  useEffect(() => { if (!isLoggedIn && !isLoading) openAuth(); }, [isLoggedIn, isLoading]);
-
-  if (isLoading || (isLoggedIn && !user)) return <RoleLoadingSpinner />;
-
-  if (!isLoggedIn || !['instructor', 'admin', 'super_admin'].includes(user?.role)) return <NotFound />;
-
-  return children;
-}
-
-function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
-  return null;
-}
-
 export default function App() {
-  const { fetchMe, token }    = useAuthStore();
+  const { fetchMe, token }      = useAuthStore();
   const { toasts, removeToast } = useAppStore();
 
-  // Restore session on mount
-  useEffect(() => {
-    if (token) fetchMe();
-  }, []);
+  useEffect(() => { if (token) fetchMe(); }, []);
 
   return (
     <>
       <ScrollToTop />
-      {/* Structured data for SEO */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'EducationalOrganization',
-        name: 'Stadi Learning Platform',
-        description: 'Vocational skills training for Kenya — 15 languages, offline access, M-Pesa payments',
-        url: 'https://stadi.ke',
-        address: { '@type': 'PostalAddress', addressLocality: 'Kisumu', addressCountry: 'KE' },
-        contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', telephone: '+254700000000' },
-      })}} />
-
       <React.Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-stadi-green border-t-transparent rounded-full animate-spin" />
@@ -124,19 +85,28 @@ export default function App() {
       }>
         <Layout>
           <Routes>
-            <Route path="/"                      element={<HomePage />} />
-            <Route path="/courses"               element={<CoursesPage />} />
-            <Route path="/courses/:slug"         element={<CourseDetailPage />} />
-            <Route path="/about"                 element={<AboutPage />} />
-            <Route path="/certificates/verify"   element={<CertificateVerifyPage />} />
-            <Route path="/certificates/verify/:num" element={<CertificateVerifyPage />} />
-            <Route path="/dashboard"             element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="/dashboard/*"           element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="/learn/:courseId"       element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
-            <Route path="/profile"               element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/admin/*"               element={<AdminRoute><AdminPage /></AdminRoute>} />
-            <Route path="/instructor/*"          element={<InstructorRoute><InstructorPage /></InstructorRoute>} />
-            <Route path="*"                      element={<NotFound />} />
+            {/* ── Public ──────────────────────────────────────── */}
+            <Route path="/"                            element={<HomePage />} />
+            <Route path="/courses"                     element={<CoursesPage />} />
+            <Route path="/courses/:slug"               element={<CourseDetailPage />} />
+            <Route path="/about"                       element={<AboutPage />} />
+            <Route path="/careers"                     element={<CareersPage />} />
+            <Route path="/certificates/verify"         element={<CertificateVerifyPage />} />
+            <Route path="/certificates/verify/:number" element={<CertificateVerifyPage />} />
+
+            {/* ── Authenticated ───────────────────────────────── */}
+            <Route path="/dashboard"                   element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/dashboard/certificates"      element={<ProtectedRoute><MyCertificatesPage /></ProtectedRoute>} />
+            <Route path="/learn/:courseId"             element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
+            <Route path="/profile"                     element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+            {/* ── Role-restricted ─────────────────────────────── */}
+            <Route path="/admin/*"                     element={<ProtectedRoute><AdminRoute><AdminPage /></AdminRoute></ProtectedRoute>} />
+            <Route path="/instructor/*"                element={<ProtectedRoute><InstructorPage /></ProtectedRoute>} />
+            <Route path="/finance/*"                   element={<ProtectedRoute><FinanceRoute><FinancePage /></FinanceRoute></ProtectedRoute>} />
+            <Route path="/hr/*"                        element={<ProtectedRoute><HRRoute><HRPage /></HRRoute></ProtectedRoute>} />
+
+            <Route path="*"                            element={<NotFound />} />
           </Routes>
         </Layout>
       </React.Suspense>

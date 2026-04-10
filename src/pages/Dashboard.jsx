@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   const shareReferral = () => {
     const text = encodeURIComponent(
-      `Join me on Stadi — learn skills and start earning in Kenya! 🇰🇪\nUse my referral code ${referral.code} and get KES 50 off your first course.\nhttps://stadi.co.ke?ref=${referral.code}`
+      `Join me on Stadi — learn skills and start earning in Kenya! 🇰🇪\nUse my referral code ${referral.code} and get KES 50 off your first course.\nhttps://stadi.ke?ref=${referral.code}`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                       <button
                         onClick={() => {
                           const t = encodeURIComponent(
-                            `I earned my Stadi Certificate in ${c.courses?.title}! Verify it here: https://stadi.co.ke/certificates/verify/${c.certificate_number}`
+                            `I earned my Stadi Certificate in ${c.courses?.title}! Verify it here: https://stadi.ke/certificates/verify/${c.certificate_number}`
                           );
                           window.open(`https://wa.me/?text=${t}`, '_blank');
                         }}

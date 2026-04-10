@@ -175,7 +175,7 @@ npm i -g vercel
 vercel
 
 # Set environment variables in Vercel dashboard:
-# VITE_API_URL=https://api.stadi.co.ke/api
+# VITE_API_URL=https://api.stadi.ke/api
 # VITE_ANTHROPIC_API_KEY=your_key
 ```
 
@@ -201,6 +201,6 @@ Add a `vercel.json` for SPA routing:
 ## Contact
 
 **Felix Sawo** — Founder & CEO  
-📧 felix@stadi.co.ke  
-🌐 stadi.co.ke  
+📧 felix@stadi.ke  
+🌐 stadi.ke  
 📍 Kisumu City, Western Kenya

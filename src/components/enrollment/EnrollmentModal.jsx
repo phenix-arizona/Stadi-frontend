@@ -282,7 +282,7 @@ export default function EnrollmentModal({ isOpen, onClose, course }) {
               <Button variant="outline" className="flex-1" onClick={() => { setStep(STEPS.PHONE); setError(''); setPollCount(0); }}>
                 Try Again
               </Button>
-              <a href="https://wa.me/254700000000" target="_blank" rel="noreferrer" className="flex-1">
+              <a href="https://wa.me/254701901244" target="_blank" rel="noreferrer" className="flex-1">
                 <Button variant="ghost" className="w-full border border-gray-200">WhatsApp Support</Button>
               </a>
             </div>

@@ -72,7 +72,7 @@ export function MyCertificatesPage() {
 
   const shareWhatsApp = (cert) => {
     const text = encodeURIComponent(
-      `🏆 I earned my Stadi Certificate in "${cert.courses?.title}"!\n\nVerify it here: https://stadi.co.ke/certificates/verify/${cert.certificate_number}\n\nJoin me on Stadi — Learn Skills. Start Earning.`
+      `🏆 I earned my Stadi Certificate in "${cert.courses?.title}"!\n\nVerify it here: https://stadi.ke/certificates/verify/${cert.certificate_number}\n\nJoin me on Stadi — Learn Skills. Start Earning.`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
@@ -243,7 +243,7 @@ export function CertificateVerifyPage() {
 
           {!result.valid && (
             <p className="text-sm text-red-600 mt-2">
-              This certificate has been revoked or does not exist. Contact <a href="mailto:support@stadi.co.ke" className="underline">support@stadi.co.ke</a> for assistance.
+              This certificate has been revoked or does not exist. Contact <a href="mailto:support@stadi.ke" className="underline">support@stadi.ke</a> for assistance.
             </p>
           )}
         </div>
