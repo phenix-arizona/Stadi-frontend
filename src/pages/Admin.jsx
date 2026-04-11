@@ -7,8 +7,7 @@ import {
   Eye, CheckCircle, XCircle, ChevronLeft, ChevronRight,
   BarChart3, Flame, MessageSquare, Download, Filter,
   ArrowUpRight, ArrowDownRight, Clock, Zap, Bell,
-  MoreVertical, UserCheck, UserX, Globe, Activity
-} from 'lucide-react';
+  MoreVertical, UserCheck, UserX, Globe, Activity, DollarSign} from 'lucide-react';
 import { adminAPI } from '../lib/api';
 import { Skeleton, Badge, Button, Input, Modal } from '../components/ui';
 import useAppStore from '../store/app.store';
@@ -607,6 +606,55 @@ export default function AdminPage() {
                               className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
                             >
                               <UserX size={12} /> Remove Instructor
+                            </button>
+                          )}
+                          {/* ── Finance & HR role assignment ── */}
+                          {!['finance','hr','admin','super_admin'].includes(u.role) && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.post('/hr/staff', { phone: u.phone, name: u.name, role: 'finance' });
+                                  addToast(`✅ ${u.name || u.phone} is now a Finance Officer`, 'success');
+                                  qc.invalidateQueries(['admin', 'users']);
+                                } catch (e) {
+                                  addToast(e?.message || 'Failed to assign role.', 'error');
+                                }
+                              }}
+                              className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                            >
+                              <DollarSign size={12} /> Make Finance
+                            </button>
+                          )}
+                          {!['finance','hr','admin','super_admin'].includes(u.role) && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.post('/hr/staff', { phone: u.phone, name: u.name, role: 'hr' });
+                                  addToast(`✅ ${u.name || u.phone} is now an HR Officer`, 'success');
+                                  qc.invalidateQueries(['admin', 'users']);
+                                } catch (e) {
+                                  addToast(e?.message || 'Failed to assign role.', 'error');
+                                }
+                              }}
+                              className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg text-purple-600 hover:bg-purple-50 transition-colors"
+                            >
+                              <Users size={12} /> Make HR
+                            </button>
+                          )}
+                          {['finance','hr'].includes(u.role) && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.patch(`/admin/users/${u.id}`, { role: 'learner' });
+                                  addToast(`${u.name || u.phone} role removed.`, 'info');
+                                  qc.invalidateQueries(['admin', 'users']);
+                                } catch (e) {
+                                  addToast(e?.message || 'Failed to update role.', 'error');
+                                }
+                              }}
+                              className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg text-gray-400 hover:bg-gray-100 transition-colors"
+                            >
+                              <UserX size={12} /> Remove Role
                             </button>
                           )}
                         </div>

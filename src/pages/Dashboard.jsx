@@ -64,6 +64,32 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {user?.role === 'finance' && (
+        <div className="mb-6 rounded-2xl bg-blue-700 text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-blue-200 mb-1">Finance Access</div>
+            <div className="font-bold text-lg">Finance Officer Dashboard</div>
+            <div className="text-sm text-blue-100 mt-0.5">Review transactions, approve instructor payouts, and manage financial records.</div>
+          </div>
+          <Link to="/finance" className="shrink-0">
+            <Button variant="secondary" size="sm">Open Finance Dashboard →</Button>
+          </Link>
+        </div>
+      )}
+
+      {user?.role === 'hr' && (
+        <div className="mb-6 rounded-2xl bg-purple-700 text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-purple-200 mb-1">HR Access</div>
+            <div className="font-bold text-lg">HR Officer Dashboard</div>
+            <div className="text-sm text-purple-100 mt-0.5">Manage staff, approve leave requests, post jobs, and review applications.</div>
+          </div>
+          <Link to="/hr" className="shrink-0">
+            <Button variant="secondary" size="sm">Open HR Dashboard →</Button>
+          </Link>
+        </div>
+      )}
+
       {/* Greeting */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-stadi-dark" style={{ fontFamily: 'Playfair Display' }}>

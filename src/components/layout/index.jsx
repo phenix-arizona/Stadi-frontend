@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   BookOpen, Bell, Menu, X, Home, Search, Heart, Award,
-  User, LogOut, Settings, ChevronDown, Flame, Wifi, WifiOff,
-} from 'lucide-react';
+  User, LogOut, Settings, ChevronDown, Flame, Wifi, WifiOff, DollarSign, Building2, BarChart3} from 'lucide-react';
 import useAuthStore from '../../store/auth.store';
 import useAppStore  from '../../store/app.store';
 import { Badge }    from '../ui';
@@ -157,6 +156,31 @@ export function Navbar() {
                         <div className="font-semibold text-stadi-dark text-sm truncate">{user?.name || 'Learner'}</div>
                         <div className="text-xs text-stadi-gray">{user?.phone}</div>
                       </div>
+                      {/* Role-specific portal link */}
+                      {['admin','super_admin'].includes(user?.role) && (
+                        <Link to="/admin" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-stadi-orange hover:bg-orange-50 transition-colors">
+                          <BarChart3 size={15} /> Admin Dashboard
+                        </Link>
+                      )}
+                      {user?.role === 'finance' && (
+                        <Link to="/finance" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
+                          <DollarSign size={15} /> Finance Dashboard
+                        </Link>
+                      )}
+                      {user?.role === 'hr' && (
+                        <Link to="/hr" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-purple-600 hover:bg-purple-50 transition-colors">
+                          <Building2 size={15} /> HR Dashboard
+                        </Link>
+                      )}
+                      {user?.role === 'instructor' && (
+                        <Link to="/instructor" onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-stadi-green hover:bg-stadi-green-light transition-colors">
+                          <BookOpen size={15} /> Instructor Portal
+                        </Link>
+                      )}
                       {[
                         { to: '/dashboard', icon: Home, label: 'Dashboard' },
                         { to: '/dashboard/bookmarks', icon: Heart, label: 'Bookmarks' },
@@ -233,6 +257,12 @@ export function Navbar() {
             {isLoggedIn ? (
               <>
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-stadi-dark hover:bg-gray-50 rounded-xl">📊 Dashboard</Link>
+                {user?.role === 'finance' && (
+                  <Link to="/finance" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl">💰 Finance Dashboard</Link>
+                )}
+                {user?.role === 'hr' && (
+                  <Link to="/hr" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-xl">👥 HR Dashboard</Link>
+                )}
                 <button onClick={() => { logout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-3 text-sm font-medium text-red-500">🚪 Logout</button>
               </>
             ) : (
