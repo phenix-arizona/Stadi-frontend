@@ -13,27 +13,74 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// ✅ Shared refresh promise — all concurrent 401s wait on the SAME refresh call
+// instead of each firing their own, which caused the request stampede
+let refreshPromise = null;
+
+const doLogout = () => {
+  localStorage.removeItem('stadi_token');
+  localStorage.removeItem('stadi_refresh');
+  // ✅ Clear the Zustand persist store too, not just localStorage
+  try {
+    const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
+    stored.state = {
+      ...stored.state,
+      user: null, token: null, refreshToken: null,
+      isLoggedIn: false, isAdmin: false,
+      isInstructor: false, isFinance: false, isHR: false,
+    };
+    localStorage.setItem('stadi-auth', JSON.stringify(stored));
+  } catch {}
+  window.location.href = '/';
+};
+
 // Auto-refresh on 401
 api.interceptors.response.use(
   (res) => res.data,
   async (err) => {
     const original = err.config;
+
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
+
+      const refresh = localStorage.getItem('stadi_refresh');
+
+      // ✅ No refresh token at all — log out immediately, don't even try
+      if (!refresh) {
+        doLogout();
+        return Promise.reject(err.response?.data || err);
+      }
+
       try {
-        const refresh = localStorage.getItem('stadi_refresh');
-        if (!refresh) throw new Error('No refresh token');
-        const res = await axios.post('/api/auth/refresh', { refreshToken: refresh });
+        // ✅ Reuse an in-flight refresh instead of firing a new one
+        if (!refreshPromise) {
+          refreshPromise = axios
+            .post('/api/auth/refresh', { refreshToken: refresh })
+            .finally(() => { refreshPromise = null; }); // ✅ always release
+        }
+
+        const res = await refreshPromise;
         const newToken = res.data.data.accessToken;
         localStorage.setItem('stadi_token', newToken);
+
+        // ✅ Also update the Zustand persisted token
+        try {
+          const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
+          if (stored.state) {
+            stored.state.token = newToken;
+            localStorage.setItem('stadi-auth', JSON.stringify(stored));
+          }
+        } catch {}
+
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
-        localStorage.removeItem('stadi_token');
-        localStorage.removeItem('stadi_refresh');
-        window.location.href = '/';
+        // ✅ Refresh failed — full logout, stop the loop
+        doLogout();
+        return Promise.reject(err.response?.data || err);
       }
     }
+
     return Promise.reject(err.response?.data || err);
   }
 );

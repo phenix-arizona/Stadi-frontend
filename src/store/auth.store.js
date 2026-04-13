@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { auth as authAPI } from '../lib/api';
 
+// ✅ Module-level guard — prevents concurrent fetchMe calls across ALL store instances
+let isFetchingMe = false;
+
 const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -38,6 +41,9 @@ const useAuthStore = create(
       closeAuth: () => set({ isAuthOpen: false }),
 
       fetchMe: async () => {
+        // ✅ If already fetching, skip — don't fire a second parallel request
+        if (isFetchingMe) return get().user;
+        isFetchingMe = true;
         set({ isLoading: true });
         try {
           const res = await authAPI.me();
@@ -52,9 +58,16 @@ const useAuthStore = create(
             isLoading:    false,
           });
           return user;
-        } catch {
+        } catch (err) {
           set({ isLoading: false });
+          // ✅ On 401, clear the bad token rather than silently returning null
+          if (err?.status === 401 || err?.response?.status === 401) {
+            get().logout();
+          }
           return null;
+        } finally {
+          // ✅ Always release the lock
+          isFetchingMe = false;
         }
       },
 
