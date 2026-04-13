@@ -8,4 +8,8 @@ cmds = ["npm install"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "npx serve -s dist -l $PORT --no-clipboard"
+# FIX: Added --single flag — this tells `serve` to redirect all 404s to index.html
+# which is required for React Router (SPA) to work on Railway.
+# Without --single, Railway serves a 404 HTML page for /courses, /dashboard etc,
+# and the browser then tries to load that HTML as a JS module → MIME type error.
+cmd = "npx serve -s dist -l $PORT --no-clipboard --single"

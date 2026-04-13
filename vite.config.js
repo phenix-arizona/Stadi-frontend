@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'logo-icon.png', 'robots.txt'],
+      includeAssets: ['favicon.svg', 'logo-icon.png'],
       manifest: {
         name: 'Stadi — Learn Skills. Start Earning.',
         short_name: 'Stadi',
@@ -22,77 +22,70 @@ export default defineConfig({
         lang: 'en-KE',
         categories: ['education', 'productivity'],
         icons: [
-          { src: '/logo-icon.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/logo-icon.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          // FIX: 'any' avoids the "Resource size is not correct" error
+          // when you only have one logo-icon.png that isn't exactly 192x192 or 512x512
+          { src: '/logo-icon.png', sizes: 'any', type: 'image/png', purpose: 'any'      },
+          { src: '/logo-icon.png', sizes: 'any', type: 'image/png', purpose: 'maskable' },
         ],
         shortcuts: [
-          {
-            name: 'Browse Courses',
-            short_name: 'Courses',
-            description: 'Browse all vocational courses',
-            url: '/courses',
-            icons: [{ src: '/logo-icon.png', sizes: '96x96' }],
-          },
-          {
-            name: 'My Dashboard',
-            short_name: 'Dashboard',
-            description: 'View your learning progress',
-            url: '/dashboard',
-            icons: [{ src: '/logo-icon.png', sizes: '96x96' }],
-          },
+          { name: 'Browse Courses', short_name: 'Courses',   url: '/courses',   icons: [{ src: '/logo-icon.png', sizes: 'any' }] },
+          { name: 'My Dashboard',   short_name: 'Dashboard', url: '/dashboard', icons: [{ src: '/logo-icon.png', sizes: 'any' }] },
         ],
       },
       workbox: {
-        // Cache pages for offline
         runtimeCaching: [
           {
-            // API responses — network first, fall back to cache
+            // API — network first, cache fallback
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'stadi-api-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 }, // 24h
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
               networkTimeoutSeconds: 10,
               cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            // Unsplash & Google Fonts images
+            // External images & fonts
             urlPattern: ({ url }) =>
-              url.origin.includes('unsplash.com') ||
+              url.origin.includes('unsplash.com')        ||
               url.origin.includes('fonts.googleapis.com') ||
               url.origin.includes('fonts.gstatic.com'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'stadi-assets-cache',
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 days
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
-            // App shell — stale while revalidate for static assets
+            // Static assets — stale while revalidate
             urlPattern: ({ request }) =>
               request.destination === 'script' ||
-              request.destination === 'style' ||
+              request.destination === 'style'  ||
               request.destination === 'image',
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'stadi-static-cache',
-              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7 days
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
         ],
-        // Pre-cache key routes
-        additionalManifestEntries: [
-          { url: '/', revision: null },
-          { url: '/courses', revision: null },
-          { url: '/dashboard', revision: null },
+        // FIX: This is the key fix for the MIME type error.
+        // navigateFallback tells the SW to serve index.html for SPA navigation,
+        // but the denylist prevents it from intercepting actual JS/CSS asset requests
+        // (which would cause the server to return index.html with MIME type text/html
+        // for a script — exactly the error you saw).
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [
+          /^\/api\//,       // never intercept API calls
+          /\.\w{2,5}$/,     // never intercept requests for actual files (.js, .css, .png etc)
         ],
         skipWaiting: true,
         clientsClaim: true,
       },
       devOptions: {
-        enabled: false, // set true to test SW in dev
+        enabled: false,
       },
     }),
   ],
