@@ -18,19 +18,21 @@ const useAuthStore = create(
         set({ token, refreshToken });
       },
 
-      // setUser now also derives role flags so they are always in sync
+      // setUser derives all role flags so they are always in sync
       setUser: (user) => set({
         user,
         isLoggedIn:    !!user,
         isAdmin:       ['admin', 'super_admin'].includes(user?.role),
         isInstructor:  ['instructor', 'admin', 'super_admin'].includes(user?.role),
+        isFinance:     ['finance', 'admin', 'super_admin'].includes(user?.role),
+        isHR:          ['hr', 'admin', 'super_admin'].includes(user?.role),
       }),
 
-      // Derived role flags — stored as plain booleans so components can
-      // destructure them directly: const { isAdmin } = useAuthStore()
-      // and use them as `if (isAdmin)` without calling them as functions.
+      // Derived role flags — plain booleans for direct destructuring
       isAdmin:       false,
       isInstructor:  false,
+      isFinance:     false,
+      isHR:          false,
 
       openAuth:  () => set({ isAuthOpen: true }),
       closeAuth: () => set({ isAuthOpen: false }),
@@ -45,6 +47,8 @@ const useAuthStore = create(
             isLoggedIn:   !!user,
             isAdmin:      ['admin', 'super_admin'].includes(user?.role),
             isInstructor: ['instructor', 'admin', 'super_admin'].includes(user?.role),
+            isFinance:    ['finance', 'admin', 'super_admin'].includes(user?.role),
+            isHR:         ['hr', 'admin', 'super_admin'].includes(user?.role),
             isLoading:    false,
           });
           return user;
@@ -65,6 +69,8 @@ const useAuthStore = create(
           isLoggedIn:   false,
           isAdmin:      false,
           isInstructor: false,
+          isFinance:    false,
+          isHR:         false,
         });
       },
     }),
@@ -77,6 +83,8 @@ const useAuthStore = create(
         isLoggedIn:   state.isLoggedIn,
         isAdmin:      state.isAdmin,
         isInstructor: state.isInstructor,
+        isFinance:    state.isFinance,
+        isHR:         state.isHR,
       }),
     }
   )

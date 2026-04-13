@@ -37,7 +37,7 @@ export function OfflineBanner() {
 }
 
 export function Navbar() {
-  const { user, isLoggedIn, openAuth, logout, isAdmin } = useAuthStore();
+  const { user, isLoggedIn, openAuth, logout, isAdmin, isFinance, isHR, isInstructor } = useAuthStore();
   const { language, setLanguage } = useAppStore();
   const [mobileOpen,   setMobileOpen]   = useState(false);
   const [profileOpen,  setProfileOpen]  = useState(false);
@@ -163,19 +163,19 @@ export function Navbar() {
                           <BarChart3 size={15} /> Admin Dashboard
                         </Link>
                       )}
-                      {user?.role === 'finance' && (
+                      {isFinance && !isAdmin && (
                         <Link to="/finance" onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
                           <DollarSign size={15} /> Finance Dashboard
                         </Link>
                       )}
-                      {user?.role === 'hr' && (
+                      {isHR && !isAdmin && (
                         <Link to="/hr" onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-purple-600 hover:bg-purple-50 transition-colors">
                           <Building2 size={15} /> HR Dashboard
                         </Link>
                       )}
-                      {user?.role === 'instructor' && (
+                      {isInstructor && !isAdmin && !isFinance && !isHR && (
                         <Link to="/instructor" onClick={() => setProfileOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-stadi-green hover:bg-stadi-green-light transition-colors">
                           <BookOpen size={15} /> Instructor Portal
@@ -257,10 +257,10 @@ export function Navbar() {
             {isLoggedIn ? (
               <>
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-stadi-dark hover:bg-gray-50 rounded-xl">📊 Dashboard</Link>
-                {user?.role === 'finance' && (
+                {isFinance && !isAdmin && (
                   <Link to="/finance" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl">💰 Finance Dashboard</Link>
                 )}
-                {user?.role === 'hr' && (
+                {isHR && !isAdmin && (
                   <Link to="/hr" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-xl">👥 HR Dashboard</Link>
                 )}
                 <button onClick={() => { logout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-3 text-sm font-medium text-red-500">🚪 Logout</button>

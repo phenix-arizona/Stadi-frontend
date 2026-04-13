@@ -8,10 +8,16 @@ import useAuthStore from '../store/auth.store';
 import CourseCard from '../components/course/CourseCard';
 
 export default function DashboardPage() {
-  const { user, isAdmin, isInstructor } = useAuthStore();
+  const { user, isAdmin, isInstructor, isFinance, isHR, fetchMe } = useAuthStore();
 
   const userIsAdmin      = typeof isAdmin      === 'function' ? isAdmin()      : isAdmin;
   const userIsInstructor = typeof isInstructor === 'function' ? isInstructor() : isInstructor;
+  const userIsFinance    = typeof isFinance     === 'function' ? isFinance()     : isFinance;
+  const userIsHR         = typeof isHR          === 'function' ? isHR()          : isHR;
+
+  // Refresh user role from server on mount — ensures role changes by admin
+  // are reflected immediately without requiring the user to log out/in
+  React.useEffect(() => { fetchMe(); }, []);
 
   const { data: statsData,  isLoading: statsLoading }  = useQuery({ queryKey: ['user','stats'],        queryFn: userAPI.stats });
   const { data: contData }                              = useQuery({ queryKey: ['progress','continue'], queryFn: () => import('../lib/api').then(m=>m.progress.continuelearning()) });
@@ -51,7 +57,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!userIsAdmin && userIsInstructor && (
+      {!userIsAdmin && userIsInstructor && !userIsFinance && !userIsHR && (
         <div className="mb-6 rounded-2xl bg-stadi-green text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-stadi-orange mb-1">Instructor Access</div>
@@ -64,7 +70,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {user?.role === 'finance' && (
+      {userIsFinance && !userIsAdmin && (
         <div className="mb-6 rounded-2xl bg-blue-700 text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-blue-200 mb-1">Finance Access</div>
@@ -77,7 +83,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {user?.role === 'hr' && (
+      {userIsHR && !userIsAdmin && (
         <div className="mb-6 rounded-2xl bg-purple-700 text-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-purple-200 mb-1">HR Access</div>
