@@ -5,6 +5,7 @@ import useAppStore   from './store/app.store';
 import Layout        from './components/layout';
 import AuthModal     from './components/auth/AuthModal';
 import AIChatWidget  from './components/ai/ChatWidget';
+import InstallBanner from './components/InstallBanner';
 import { ToastContainer } from './components/ui';
 
 import HomePage          from './pages/Home';
@@ -113,6 +114,7 @@ export default function App() {
 
       <AuthModal />
       <AIChatWidget />
+      <InstallBanner />
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </>
   );

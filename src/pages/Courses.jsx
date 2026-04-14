@@ -4,6 +4,7 @@ import { useQuery }               from '@tanstack/react-query';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { courses as coursesAPI }  from '../lib/api';
 import { CourseCard }             from '../components/course/CourseCard';
+import NotificationSettings       from '../components/NotificationSettings';
 import { SkeletonCard }           from '../components/ui';
 
 // ── Category images (same URLs used in Home + CourseCard) ─────
@@ -161,6 +162,10 @@ export default function CoursesPage() {
         {meta.total > 0 && (
           <p className="text-stadi-gray text-sm mt-1">{meta.total} courses available</p>
         )}
+      </div>
+
+      <div className="mb-6 flex justify-start sm:justify-end">
+        <NotificationSettings mode="trigger" triggerLabel="Get Course Alerts" />
       </div>
 
       {/* Search + filter bar */}
