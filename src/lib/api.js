@@ -180,17 +180,21 @@ export const payouts = {
 
 // ── Admin ─────────────────────────────────────────────────────
 export const adminAPI = {
-  stats:        () => api.get('/admin/stats'),
-  users:        (params) => api.get('/admin/users', { params }),
-  updateUser:   (id, data) => api.patch(`/admin/users/${id}`, data),
-  courses:      (params) => api.get('/admin/courses', { params }),
-  updateCourse: (id, data) => api.patch(`/admin/courses/${id}`, data),
-  payments:     (params) => api.get('/admin/payments', { params }),
-  refund:       (id, reason) => api.post(`/admin/payments/${id}/refund`, { reason }),
-  payouts:      (params) => api.get('/admin/payouts', { params }),
-  approvePayout:(id) => api.post(`/payouts/${id}/approve`),
-  auditLog:     () => api.get('/admin/audit-log'),
+  stats:         () => api.get('/admin/stats'),
+  users:         (params) => api.get('/admin/users', { params }),
+  updateUser:    (id, data) => api.patch(`/admin/users/${id}`, data),
+  courses:       (params) => api.get('/admin/courses', { params }),
+  updateCourse:  (id, data) => api.patch(`/admin/courses/${id}`, data),
+  payments:      (params) => api.get('/admin/payments', { params }),
+  refund:        (id, reason) => api.post(`/admin/payments/${id}/refund`, { reason }),
+  payouts:       (params) => api.get('/admin/payouts', { params }),
+  approvePayout: (id) => api.post(`/payouts/${id}/approve`),
+  auditLog:      () => api.get('/admin/audit-log'),
+  setInstructor: (data) => api.post('/admin/users/set-instructor', data),
+  setFinance:    (id) => api.post(`/admin/users/${id}/set-finance`),
+  setHR:         (id) => api.post(`/admin/users/${id}/set-hr`),
 };
+
 
 // ── Instructor ────────────────────────────────────────────────
 export const instructorAPI = {

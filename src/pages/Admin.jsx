@@ -254,21 +254,52 @@ export default function AdminPage() {
   const closeTicket    = useMutation({ mutationFn: (id) => api.patch(`/support/tickets/${id}`, { status: 'resolved' }), onSuccess: () => { qc.invalidateQueries(['admin', 'support']); addToast('Ticket resolved ✓', 'success'); } });
 
   // ── Add Instructor ──────────────────────────────────────────
-  const handleAddInstructor = async () => {
-    const phone = newInstructor.phone.trim().replace(/^0/, '+254').replace(/^(?!\+)/, '+254');
-    if (!phone.match(/^\+254\d{9}$/)) { addToast('Enter a valid Kenyan number e.g. 0712345678', 'error'); return; }
-    setAddingInstructor(true);
-    try {
-      // Find or create user, then set role to instructor
-      const res = await api.patch(`/admin/users/set-instructor`, { phone, name: newInstructor.name.trim() });
-      addToast(`✅ ${newInstructor.name || phone} is now an instructor`, 'success');
-      setAddInstructorOpen(false);
-      setNewInstructor({ phone: '', name: '' });
-      qc.invalidateQueries(['admin', 'users']);
-    } catch (e) {
-      addToast(e?.message || 'Failed to add instructor. Check the phone number.', 'error');
-    } finally { setAddingInstructor(false); }
-  };
+ // ── Add Instructor ──────────────────────────────────────────
+const handleAddInstructor = async () => {
+  const phone = newInstructor.phone.trim().replace(/^0/, '+254').replace(/^(?!\+)/, '+254');
+  if (!phone.match(/^\+254\d{9}$/)) { addToast('Enter a valid Kenyan number e.g. 0712345678', 'error'); return; }
+  setAddingInstructor(true);
+  try {
+    await adminAPI.setInstructor({ phone, name: newInstructor.name.trim() });
+    addToast(`✅ ${newInstructor.name || phone} is now an instructor`, 'success');
+    setAddInstructorOpen(false);
+    setNewInstructor({ phone: '', name: '' });
+    qc.invalidateQueries(['admin', 'users']);
+  } catch (e) {
+    addToast(e?.message || 'Failed to add instructor. Check the phone number.', 'error');
+  } finally { setAddingInstructor(false); }
+};
+
+// ── Quick-add instructor (keyboard-first) ──────────────────
+const handleQuickAdd = async () => {
+  const raw = quickPhone.trim();
+  if (!raw) return;
+  const phone = raw
+    .replace(/\s+/g, '')
+    .replace(/^0/, '+254')
+    .replace(/^254/, '+254')
+    .replace(/^(?!\+)/, '+254');
+
+  if (!phone.match(/^\+254\d{9}$/)) {
+    addToast('Enter a valid Kenyan number e.g. 0712 345 678', 'error');
+    quickPhoneRef.current?.focus();
+    return;
+  }
+
+  setQuickAdding(true);
+  try {
+    await adminAPI.setInstructor({ phone, name: quickName.trim() || undefined });
+    addToast(`✅ ${quickName.trim() || phone} is now an instructor`, 'success');
+    setQuickPhone('');
+    setQuickName('');
+    qc.invalidateQueries(['admin', 'users']);
+    quickPhoneRef.current?.focus();
+  } catch (e) {
+    addToast(e?.message || 'Failed. Check the phone number and try again.', 'error');
+  } finally {
+    setQuickAdding(false);
+  }
+};
 
   // ── Quick-add instructor (keyboard-first) ──────────────────
   const handleQuickAdd = async () => {
