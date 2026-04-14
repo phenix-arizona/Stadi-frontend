@@ -301,36 +301,6 @@ const handleQuickAdd = async () => {
   }
 };
 
-  // ── Quick-add instructor (keyboard-first) ──────────────────
-  const handleQuickAdd = async () => {
-    const raw = quickPhone.trim();
-    if (!raw) return;
-    // Normalise: 07xx → +2547xx, 2547xx → +2547xx, +2547xx → +2547xx
-    const phone = raw
-      .replace(/\s+/g, '')
-      .replace(/^0/, '+254')
-      .replace(/^254/, '+254')
-      .replace(/^(?!\+)/, '+254');
-    if (!phone.match(/^\+254\d{9}$/)) {
-      addToast('Enter a valid Kenyan number e.g. 0712 345 678', 'error');
-      quickPhoneRef.current?.focus();
-      return;
-    }
-    setQuickAdding(true);
-    try {
-      await api.patch('/admin/users/set-instructor', { phone, name: quickName.trim() || undefined });
-      addToast(`✅ ${quickName.trim() || phone} is now an instructor`, 'success');
-      setQuickPhone('');
-      setQuickName('');
-      qc.invalidateQueries(['admin', 'users']);
-      quickPhoneRef.current?.focus();
-    } catch (e) {
-      addToast(e?.message || 'Failed. Check the phone number and try again.', 'error');
-    } finally {
-      setQuickAdding(false);
-    }
-  };
-
   // ── Layout ───────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 flex">
