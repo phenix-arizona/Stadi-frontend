@@ -72,7 +72,7 @@ export function MyCertificatesPage() {
 
   const shareWhatsApp = (cert) => {
     const text = encodeURIComponent(
-      `🏆 I earned my Stadi Certificate in "${cert.courses?.title}"!\n\nVerify it here: https://stadi.ke/certificates/verify/${cert.certificate_number}\n\nJoin me on Stadi — Learn Skills. Start Earning.`
+      `I earned my Stadi Certificate in "${cert.courses?.title}".\n\nVerify it here: https://stadi.ke/certificates/verify/${cert.certificate_number}\n\nJoin me on Stadi to learn skills and start earning.`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
@@ -87,9 +87,7 @@ export function MyCertificatesPage() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-stadi-dark" style={{ fontFamily: 'Playfair Display' }}>
-            🏆 My Certificates
-          </h1>
+          <h1 className="text-2xl font-bold text-stadi-dark" style={{ fontFamily: 'Playfair Display' }}>My Certificates</h1>
           <p className="text-stadi-gray text-sm mt-1">
             {certList.length} certificate{certList.length !== 1 ? 's' : ''} earned
           </p>
@@ -99,7 +97,7 @@ export function MyCertificatesPage() {
 
       {certList.length === 0 ? (
         <div className="text-center py-20">
-          <div className="text-6xl mb-4">🏆</div>
+          <Award size={52} className="text-stadi-orange mx-auto mb-4" />
           <h3 className="text-lg font-bold text-stadi-dark mb-2">No certificates yet</h3>
           <p className="text-stadi-gray text-sm mb-6 max-w-sm mx-auto">
             Complete a course and pass the final assessment to earn your first Stadi certificate.
@@ -152,7 +150,7 @@ export function CertificateVerifyPage() {
   const [input, setInput] = useState(number || '');
   const [queried, setQueried] = useState(number || '');
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['cert-verify', queried],
     queryFn:  () => certificates.verify(queried),
     enabled:  !!queried,
@@ -168,7 +166,7 @@ export function CertificateVerifyPage() {
   return (
     <div className="max-w-lg mx-auto px-4 py-16">
       <div className="text-center mb-8">
-        <div className="text-5xl mb-4">📜</div>
+        <QrCode size={44} className="text-stadi-green mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-stadi-dark mb-2" style={{ fontFamily: 'Playfair Display' }}>
           Verify a Certificate
         </h1>
@@ -208,7 +206,7 @@ export function CertificateVerifyPage() {
             }
             <div>
               <div className={`text-lg font-bold ${result.valid ? 'text-stadi-green' : 'text-red-600'}`}>
-                {result.valid ? '✅ Valid Certificate' : '❌ Certificate Revoked or Invalid'}
+                {result.valid ? 'Valid Certificate' : 'Certificate Revoked or Invalid'}
               </div>
               <div className="text-xs text-stadi-gray">Stadi Learning Platform</div>
             </div>
@@ -243,7 +241,7 @@ export function CertificateVerifyPage() {
 
           {!result.valid && (
             <p className="text-sm text-red-600 mt-2">
-              This certificate has been revoked or does not exist. Contact <a href="mailto:support@stadi.ke" className="underline">support@stadi.ke</a> for assistance.
+              This certificate has been revoked or does not exist. Contact <a href="mailto:stadiafrika@gmail.com" className="underline">stadiafrika@gmail.com</a> for assistance.
             </p>
           )}
         </div>
@@ -251,7 +249,6 @@ export function CertificateVerifyPage() {
 
       {!result && queried && !isLoading && (
         <div className="text-center py-8">
-          <div className="text-4xl mb-3">🔍</div>
           <p className="text-stadi-gray text-sm">
             Certificate <strong className="font-mono">{queried}</strong> not found.
             <br />Please check the number and try again.

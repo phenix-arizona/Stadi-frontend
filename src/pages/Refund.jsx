@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, MessageCircle } from 'lucide-react';
 
 const LAST_UPDATED = '1 April 2026';
-const EMAIL = 'refunds@stadi.ke';
+const EMAIL = 'stadiafrika@gmail.com';
 const WHATSAPP = '254701901244';
 
 function Section({ title, children }) {
@@ -32,7 +32,7 @@ export default function RefundPolicy() {
         </h1>
         <p className="text-stadi-gray text-sm">Last updated: <strong>{LAST_UPDATED}</strong></p>
         <div className="mt-4 bg-stadi-green-light border border-stadi-green/20 rounded-xl p-4 text-sm text-stadi-green font-medium">
-          ✅ We stand behind every course on Stadi. If you're not satisfied, we make it easy to get your money back — no long forms, no lengthy disputes.
+          We stand behind every course on Stadi. If you're not satisfied, we make it easy to get your money back without long forms or lengthy disputes.
         </div>
       </div>
 
@@ -102,7 +102,6 @@ export default function RefundPolicy() {
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <span className="text-lg mt-0.5">📧</span>
             <div>
               <div className="font-semibold text-stadi-dark dark:text-white text-sm">Email</div>
               <a href={`mailto:${EMAIL}`} className="text-stadi-green hover:underline text-xs">{EMAIL}</a>
@@ -135,8 +134,8 @@ export default function RefundPolicy() {
       <Section title="8. Contact">
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-1">
           <p><strong>Stadi Refunds Team</strong></p>
-          <p>📧 <a href={`mailto:${EMAIL}`} className="text-stadi-green hover:underline">{EMAIL}</a></p>
-          <p>📱 <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="text-stadi-green hover:underline">+254 701 901 244 (WhatsApp)</a></p>
+          <p>Email: <a href={`mailto:${EMAIL}`} className="text-stadi-green hover:underline">{EMAIL}</a></p>
+          <p>WhatsApp: <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="text-stadi-green hover:underline">+254 701 901 244</a></p>
           <p className="text-xs text-stadi-gray mt-2">Support hours: Monday–Saturday, 8am–6pm EAT</p>
         </div>
       </Section>

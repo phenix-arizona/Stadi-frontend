@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 const WHATSAPP = '254701901244';
-const EMAIL    = 'support@stadi.ke';
+const EMAIL    = 'stadiafrika@gmail.com';
 
 const FAQS = [
   {
@@ -14,20 +14,20 @@ const FAQS = [
     icon: <CreditCard size={16} className="text-stadi-orange" />,
     items: [
       {
-        q: 'I paid via M-Pesa but I'm not enrolled. What do I do?',
-        a: 'This sometimes happens due to network delays. Wait 5 minutes and refresh the page. If you're still not enrolled, send us your M-Pesa transaction reference via WhatsApp and we'll resolve it within 2 hours.',
+        q: "I paid via M-Pesa but I'm not enrolled. What do I do?",
+        a: "This sometimes happens due to network delays. Wait 5 minutes and refresh the page. If you're still not enrolled, send us your M-Pesa transaction reference via WhatsApp and we'll resolve it within 2 hours.",
       },
       {
         q: 'Which M-Pesa number should I use to pay?',
         a: 'Use the phone number registered on your Stadi account. The M-Pesa STK push will be sent to that number. If you want to use a different number, update your profile first.',
       },
       {
-        q: 'Can I pay for someone else's course?',
-        a: 'Currently, payment must be made from the registered phone number on the learner's account. We're working on gift purchases — coming soon.',
+        q: "Can I pay for someone else's course?",
+        a: "Currently, payment must be made from the registered phone number on the learner's account. We're working on gift purchases — coming soon.",
       },
       {
         q: 'How do I get a refund?',
-        a: 'You can request a full refund within 7 days of enrolment if you've completed less than 20% of the course. Contact us via WhatsApp or email at refunds@stadi.ke. See our full Refund Policy for details.',
+        a: 'You can request a full refund within 7 days of enrolment if you\'ve completed less than 20% of the course. Contact us via WhatsApp or email at stadiafrika@gmail.com. See our full Refund Policy for details.',
       },
     ],
   },
@@ -44,8 +44,8 @@ const FAQS = [
         a: 'Yes! Download lessons on Wi-Fi and watch them offline anywhere. Look for the download button on each lesson. Downloaded content is stored on your device.',
       },
       {
-        q: 'The video isn't loading. What should I do?',
-        a: 'Try switching to Wi-Fi if you're on mobile data. If the issue persists, clear your browser cache or try a different browser. Contact support if the problem continues.',
+        q: "The video isn't loading. What should I do?",
+        a: "Try switching to Wi-Fi if you're on mobile data. If the issue persists, clear your browser cache or try a different browser. Contact support if the problem continues.",
       },
       {
         q: 'Can I switch the course language?',
@@ -70,8 +70,8 @@ const FAQS = [
         a: 'Our certificates are aligned with the Kenya National Qualifications Authority (KNQA) framework and are scannable via QR code. Many employers and clients in Kenya accept Stadi certificates. We are continuously working toward formal recognition.',
       },
       {
-        q: 'I passed the assessment but my certificate hasn't appeared.',
-        a: 'Certificate generation can take up to 10 minutes. Refresh your Dashboard. If it hasn't appeared after 30 minutes, contact support with your name and course title.',
+        q: "I passed the assessment but my certificate hasn't appeared.",
+        a: "Certificate generation can take up to 10 minutes. Refresh your Dashboard. If it hasn't appeared after 30 minutes, contact support with your name and course title.",
       },
       {
         q: 'Can someone verify my certificate?',
@@ -84,8 +84,8 @@ const FAQS = [
     icon: <Settings size={16} className="text-stadi-gray" />,
     items: [
       {
-        q: 'I didn't receive my OTP. What should I do?',
-        a: 'Check that you entered the correct phone number. OTPs expire in 10 minutes. If you still don't receive it, check that your phone can receive SMS, then try again. Contact support if the problem persists.',
+        q: "I didn't receive my OTP. What should I do?",
+        a: "Check that you entered the correct phone number. OTPs expire in 10 minutes. If you still don't receive it, check that your phone can receive SMS, then try again. Contact support if the problem persists.",
       },
       {
         q: 'How do I change my phone number?',
@@ -93,10 +93,10 @@ const FAQS = [
       },
       {
         q: 'How do I delete my account?',
-        a: 'Email us at privacy@stadi.ke with your registered phone number and the subject line "Account Deletion Request". We will process your request within 30 days per our Privacy Policy.',
+        a: 'Email us at stadiafrika@gmail.com with your registered phone number and the subject line "Account Deletion Request". We will process your request within 30 days per our Privacy Policy.',
       },
       {
-        q: 'The app isn't working on my phone. What should I do?',
+        q: "The app isn't working on my phone. What should I do?",
         a: 'Stadi works on any modern Android or iOS browser. Try opening stadi.co.ke in Chrome or Safari. Clear your cache if you experience issues. Our WhatsApp bot is also always available as an alternative.',
       },
     ],

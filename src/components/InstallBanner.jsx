@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
-const AndroidIcon = () => <span>🤖</span>;
+const AndroidIcon = () => <span>AN</span>;
 const AppleIcon = () => <span></span>;
-const DesktopIcon = () => <span>💻</span>;
+const DesktopIcon = () => <span>PC</span>;
 const ShareIcon = () => <span>↥</span>;
 
 const PLATFORM_CONFIG = {
@@ -116,9 +116,9 @@ export default function InstallBanner() {
             </p>
 
             <div className="stadi-install-benefits">
-              <span className="stadi-benefit-pill">⚡ Works offline</span>
-              <span className="stadi-benefit-pill">🔔 Course alerts</span>
-              <span className="stadi-benefit-pill">📲 No app store</span>
+              <span className="stadi-benefit-pill">Works offline</span>
+              <span className="stadi-benefit-pill">Course alerts</span>
+              <span className="stadi-benefit-pill">No app store</span>
             </div>
 
             <div className="stadi-install-actions">

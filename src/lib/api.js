@@ -258,3 +258,8 @@ export const careersAPI = {
   job:   (id) => api.get(`/careers/jobs/${id}`),
   apply: (data) => api.post('/careers/apply', data),
 };
+
+// ── AI Chat (public) ─────────────────────────────────────────
+export const aiAPI = {
+  chat: (messages) => api.post('/ai/chat', { messages }),
+};

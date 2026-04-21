@@ -379,7 +379,7 @@ export function Footer() {
               </a>
             </div>
             <div>
-              <a href="mailto:info@stadi.ke" className="hover:text-stadi-orange transition-colors">✉️ info@stadi.ke</a>
+              <a href="mailto:stadiafrika@gmail.com" className="hover:text-stadi-orange transition-colors">stadiafrika@gmail.com</a>
             </div>
           </div>
         </div>

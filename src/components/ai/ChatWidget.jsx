@@ -1,21 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, Loader2 } from 'lucide-react';
-
-const SYSTEM_PROMPT = `You are Stadi's friendly AI learning assistant. Stadi is a Kenyan vocational skills platform where learners can learn practical skills and start earning money.
-
-You help with:
-- Course recommendations based on interests, county, and income goals
-- Career guidance for Kenya's informal sector (Jua Kali economy)
-- Information about specific skills, income potential, and tools needed
-- General learning tips and motivation
-- Platform navigation help
-
-Be warm, encouraging, and practical. Use simple language. Reference Kenyan context (counties, M-Pesa, local industries, Jua Kali). Keep responses concise (2-4 sentences). Occasionally use Swahili words like "Hongera!" (Congratulations!) or "Karibu!" (Welcome!). If unsure, encourage learners to browse courses or contact support via WhatsApp.`;
+import { aiAPI } from '../../lib/api';
 
 export default function AIChatWidget() {
   const [open,     setOpen]     = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Karibu! 👋 I\'m Stadi\'s AI assistant. Ask me about courses, income potential, or which skills are in demand in your county!' }
+    { role: 'assistant', content: 'Karibu. I\'m Stadi\'s AI assistant. Ask me about courses, income potential, or which skills are in demand in your county.' }
   ]);
   const [input,   setInput]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,21 +24,12 @@ export default function AIChatWidget() {
     setLoading(true);
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
-          system: SYSTEM_PROMPT,
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-        }),
-      });
-      const data = await response.json();
-      const reply = data.content?.[0]?.text || 'Sorry, I had trouble responding. Please try again!';
+      const response = await aiAPI.chat(newMessages);
+      const reply = response.data?.reply || 'Sorry, I had trouble responding. Please try again.';
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Oops! Connection issue. Please try again or WhatsApp us at +254 701901244.' }]);
+    } catch (error) {
+      const message = error?.message || error?.error || 'Sorry, I could not reach the AI assistant right now.';
+      setMessages(prev => [...prev, { role: 'assistant', content: `${message} If you need immediate help, WhatsApp us at +254 701 901 244.` }]);
     } finally {
       setLoading(false);
     }

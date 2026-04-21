@@ -1,4 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+
+const CONTACT_EMAIL = 'stadiafrika@gmail.com';
 
 function LegalPageShell({ eyebrow, title, intro, sections }) {
   return (
@@ -46,10 +49,46 @@ export function PrivacyPage() {
         },
         {
           heading: 'Your Choices',
-          body: 'You can contact Stadi to update key profile details, request support, or ask questions about how your data is handled at info@stadi.ke.',
+          body: `You can contact Stadi to update key profile details, request support, or ask questions about how your data is handled at ${CONTACT_EMAIL}.`,
         },
       ]}
     />
+  );
+}
+
+export default function LegalHubPage() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stadi-green mb-3">Legal & Support</p>
+          <h1 className="text-3xl font-bold text-stadi-dark mb-3" style={{ fontFamily: 'Playfair Display' }}>
+            Legal and Support Centre
+          </h1>
+          <p className="text-stadi-gray text-sm sm:text-base leading-relaxed max-w-2xl">
+            Find Stadi's privacy policy, terms of service, refund policy, and support options in one place.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 grid gap-5 md:grid-cols-2">
+        {[
+          { to: '/privacy', title: 'Privacy Policy', body: 'How we collect, use, protect, and retain learner data.' },
+          { to: '/terms', title: 'Terms of Service', body: 'The rules, responsibilities, and platform terms that apply when using Stadi.' },
+          { to: '/refund', title: 'Refund Policy', body: 'When refunds apply, how to request one, and how long processing takes.' },
+          { to: '/support', title: 'Support', body: `Get help with payments, access issues, certificates, or account requests at ${CONTACT_EMAIL}.` },
+        ].map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:border-stadi-green/30 hover:shadow-md transition-all"
+          >
+            <h2 className="text-lg font-bold text-stadi-dark mb-2">{item.title}</h2>
+            <p className="text-sm text-stadi-gray leading-7">{item.body}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -108,4 +147,3 @@ export function RefundPage() {
     />
   );
 }
-

@@ -593,7 +593,7 @@ export default function HomePage() {
                   View Open Roles <ArrowRight size={15} className="inline ml-1"/>
                 </button>
               </Link>
-              <a href="mailto:felix@stadi.ke?subject=Open Application — Stadi">
+              <a href="mailto:stadiafrika@gmail.com?subject=Open Application — Stadi">
                 <button className="border-2 border-white/20 text-white/80 font-semibold px-6 py-3.5 rounded-xl text-sm hover:bg-white/10 transition-all whitespace-nowrap">
                   Send Open Application
                 </button>

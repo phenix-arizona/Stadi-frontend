@@ -112,7 +112,7 @@ export function Navbar() {
                 onClick={() => setLangOpen(!langOpen)}
                 className="flex items-center gap-1 text-xs font-medium text-stadi-gray hover:text-stadi-green px-2 py-1.5 rounded-lg hover:bg-gray-50"
               >
-                🌍 {LANGUAGES.find(l => l.code === language)?.label || 'English'}
+                Language: {LANGUAGES.find(l => l.code === language)?.label || 'English'}
                 <ChevronDown size={12} />
               </button>
               {langOpen && (
@@ -241,9 +241,9 @@ export function Navbar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-100 py-4 space-y-1 animate-fade-in">
             {[
-              { to: '/',        label: '🏠 Home' },
-              { to: '/courses', label: '📚 Browse Courses' },
-              { to: '/about',   label: 'ℹ️ About Stadi' },
+              { to: '/',        label: 'Home' },
+              { to: '/courses', label: 'Browse Courses' },
+              { to: '/about',   label: 'About Stadi' },
             ].map(({ to, label }) => (
               <Link
                 key={to}
@@ -256,14 +256,14 @@ export function Navbar() {
             ))}
             {isLoggedIn ? (
               <>
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-stadi-dark hover:bg-gray-50 rounded-xl">📊 Dashboard</Link>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-stadi-dark hover:bg-gray-50 rounded-xl">Dashboard</Link>
                 {isFinance && !isAdmin && (
-                  <Link to="/finance" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl">💰 Finance Dashboard</Link>
+                  <Link to="/finance" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-xl">Finance Dashboard</Link>
                 )}
                 {isHR && !isAdmin && (
-                  <Link to="/hr" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-xl">👥 HR Dashboard</Link>
+                  <Link to="/hr" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-xl">HR Dashboard</Link>
                 )}
-                <button onClick={() => { logout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-3 text-sm font-medium text-red-500">🚪 Logout</button>
+                <button onClick={() => { logout(); setMobileOpen(false); }} className="block w-full text-left px-4 py-3 text-sm font-medium text-red-500">Logout</button>
               </>
             ) : (
               <div className="px-4 pt-2">
@@ -295,9 +295,9 @@ export function Footer() {
       {/* Trust bar */}
       <div className="bg-stadi-green py-4">
         <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center gap-6 text-sm text-white/90 font-medium">
-          <span className="flex items-center gap-2">🏛️ Aligned with KNQA Framework</span>
-          <span className="flex items-center gap-2">🎓 TVET-Compliant Content</span>
-          <span className="flex items-center gap-2">🔒 NITA-Registered Platform</span>
+          <span className="flex items-center gap-2">Aligned with KNQA Framework</span>
+          <span className="flex items-center gap-2">TVET-Compliant Content</span>
+          <span className="flex items-center gap-2">NITA-Registered Platform</span>
           <span className="flex items-center gap-2">🇰🇪 Built for Kenya</span>
         </div>
       </div>
@@ -317,7 +317,7 @@ export function Footer() {
             Learn practical vocational skills. Start earning in Kenya. In your language.
           </p>
           <div className="text-xs text-gray-500">
-            <div>📍 Kisumu City, Western Kenya</div>
+            <div>Kisumu City, Western Kenya</div>
             <div className="mt-1">
               <a
                 href="https://wa.me/254701901244"
@@ -325,12 +325,12 @@ export function Footer() {
                 rel="noreferrer"
                 className="hover:text-stadi-orange transition-colors"
               >
-                📱 WhatsApp: +254 701 901 244
+                WhatsApp: +254 701 901 244
               </a>
             </div>
             <div className="mt-1">
-              <a href="mailto:info@stadi.ke" className="hover:text-stadi-orange transition-colors">
-                ✉️ info@stadi.ke
+              <a href="mailto:stadiafrika@gmail.com" className="hover:text-stadi-orange transition-colors">
+                stadiafrika@gmail.com
               </a>
             </div>
           </div>

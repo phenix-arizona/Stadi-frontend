@@ -10,10 +10,10 @@ const STEPS = { PHONE: 'phone', OTP: 'otp', NAME: 'name', SUCCESS: 'success' };
 
 // Social proof snippets that rotate in the modal
 const PROOF_SNIPPETS = [
-  { avatar: '👩🏿', name: 'Achieng', county: 'Kisumu',   result: 'Earning KES 28K/mo in solar' },
-  { avatar: '👨🏿', name: 'Kamau',   county: 'Kakamega', result: 'Runs a phone repair kiosk' },
-  { avatar: '👩🏾', name: 'Wanjiku', county: 'Siaya',    result: 'Tailoring business from home' },
-  { avatar: '👨🏿', name: 'Ochieng', county: 'Homa Bay', result: 'Fish processing, KES 15K/mo' },
+  { avatar: 'AO', name: 'Achieng', county: 'Kisumu',   result: 'Earning KES 28K/mo in solar' },
+  { avatar: 'KN', name: 'Kamau',   county: 'Kakamega', result: 'Runs a phone repair kiosk' },
+  { avatar: 'WM', name: 'Wanjiku', county: 'Siaya',    result: 'Tailoring business from home' },
+  { avatar: 'OA', name: 'Ochieng', county: 'Homa Bay', result: 'Fish processing, KES 15K/mo' },
 ];
 
 export default function AuthModal() {
@@ -133,7 +133,7 @@ export default function AuthModal() {
           <div className="w-16 h-16 bg-stadi-green rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle size={32} className="text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-stadi-dark mb-1">You're in! 🎉</h2>
+          <h2 className="text-2xl font-bold text-stadi-dark mb-1">You're in</h2>
           <p className="text-stadi-gray text-sm">Welcome to Stadi. Start browsing courses.</p>
         </div>
       )}
@@ -167,7 +167,7 @@ export default function AuthModal() {
               <div className={`flex items-center border-2 rounded-xl overflow-hidden transition-colors
                 ${error ? 'border-red-400' : 'border-gray-200 focus-within:border-stadi-green'}`}>
                 <span className="px-3 py-3.5 bg-gray-50 text-stadi-gray text-sm font-medium border-r border-gray-200 shrink-0">
-                  🇰🇪 +254
+                  +254
                 </span>
                 <input
                   type="tel" inputMode="numeric" autoFocus
@@ -192,13 +192,13 @@ export default function AuthModal() {
             {/* Trust signals — compact */}
             <div className="grid grid-cols-2 gap-2 pt-1">
               {[
-                { icon:'🔒', text:'No password needed' },
-                { icon:'📵', text:'No spam, ever' },
-                { icon:'🇰🇪', text:'Built for Kenya' },
-                { icon:'🆓', text:'Free to browse' },
+                { text:'No password needed' },
+                { text:'No spam, ever' },
+                { text:'Built for Kenya' },
+                { text:'Free to browse' },
               ].map(t => (
                 <div key={t.text} className="flex items-center gap-1.5 text-xs text-stadi-gray">
-                  <span>{t.icon}</span>{t.text}
+                  {t.text}
                 </div>
               ))}
             </div>
@@ -219,7 +219,6 @@ export default function AuthModal() {
           </button>
 
           <div className="text-center mb-6">
-            <div className="text-4xl mb-3">📱</div>
             <h2 className="text-xl font-bold text-stadi-dark">Check your phone</h2>
             <p className="text-stadi-gray text-sm mt-1.5">
               We sent a 6-digit code to<br/>
@@ -271,7 +270,6 @@ export default function AuthModal() {
       {step === STEPS.NAME && (
         <div className="p-6">
           <div className="text-center mb-6">
-            <div className="text-4xl mb-3">👋</div>
             <h2 className="text-xl font-bold text-stadi-dark">Welcome to Stadi!</h2>
             <p className="text-stadi-gray text-sm mt-1">What should we call you?</p>
           </div>
@@ -287,7 +285,7 @@ export default function AuthModal() {
             </div>
             <Button variant="primary" className="w-full" size="lg" loading={loading}
               disabled={!name.trim()} onClick={saveName}>
-              Let's go 🚀
+              Let's go
             </Button>
             <button onClick={saveName} className="block mx-auto text-xs text-gray-400 hover:underline">
               Skip for now

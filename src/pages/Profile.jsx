@@ -62,7 +62,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="bg-stadi-green-light rounded-xl p-4">
-          <p className="text-xs text-stadi-green font-medium">📱 Phone: {user?.phone}</p>
+          <p className="text-xs text-stadi-green font-medium">Phone: {user?.phone}</p>
           <p className="text-xs text-stadi-gray mt-1">Phone number is your login — it cannot be changed.</p>
         </div>
 

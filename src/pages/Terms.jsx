@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const LAST_UPDATED = '1 April 2026';
 const COMPANY = 'Stadi Learning Platform Ltd';
-const EMAIL = 'legal@stadi.ke';
+const EMAIL = 'stadiafrika@gmail.com';
 
 function Section({ title, children }) {
   return (
@@ -132,9 +132,9 @@ export default function TermsOfService() {
       <Section title="12. Contact">
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-1">
           <p><strong>{COMPANY}</strong></p>
-          <p>📧 <a href={`mailto:${EMAIL}`} className="text-stadi-green hover:underline">{EMAIL}</a></p>
-          <p>📱 +254 701 901 244</p>
-          <p>📍 Kisumu City, Western Kenya</p>
+          <p>Email: <a href={`mailto:${EMAIL}`} className="text-stadi-green hover:underline">{EMAIL}</a></p>
+          <p>WhatsApp: +254 701 901 244</p>
+          <p>Location: Kisumu City, Western Kenya</p>
         </div>
       </Section>
 

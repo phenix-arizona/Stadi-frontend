@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const LAST_UPDATED = '1 April 2026';
 const COMPANY = 'Stadi Learning Platform Ltd';
-const EMAIL = 'privacy@stadi.ke';
+const EMAIL = 'stadiafrika@gmail.com';
 const PHONE = '+254 701 901 244';
 const ADDRESS = 'Kisumu City, Western Kenya';
 
@@ -144,9 +144,9 @@ export default function PrivacyPolicy() {
         <p>For any privacy-related questions or requests:</p>
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-1">
           <p><strong>Data Protection Officer — {COMPANY}</strong></p>
-          <p>📧 <a href={`mailto:${EMAIL}`} className="text-stadi-green hover:underline">{EMAIL}</a></p>
-          <p>📱 <a href={`https://wa.me/254701901244`} className="text-stadi-green hover:underline">{PHONE}</a></p>
-          <p>📍 {ADDRESS}</p>
+          <p>Email: <a href={`mailto:${EMAIL}`} className="text-stadi-green hover:underline">{EMAIL}</a></p>
+          <p>WhatsApp: <a href={`https://wa.me/254701901244`} className="text-stadi-green hover:underline">{PHONE}</a></p>
+          <p>Location: {ADDRESS}</p>
         </div>
       </Section>
 
