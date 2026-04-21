@@ -1,38 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="apple-touch-icon" href="/logo-icon.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Stadi — Learn practical vocational skills in 15 Kenyan languages. M-Pesa payments. Offline access. Start earning from KES 150. Join 5,000+ Kenyan graduates." />
-  <meta name="keywords" content="vocational training Kenya, skills courses Kenya, M-Pesa courses, TVET online, Stadi learning, Jua Kali skills" />
-  <meta name="theme-color" content="#1A6B4A" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Stadi" />
-  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-  <meta name="msapplication-TileColor" content="#FF6B35" />
-  <meta name="robots" content="index, follow" />
-  <meta property="og:type"        content="website" />
-  <meta property="og:url"         content="https://stadi.ke/" />
-  <meta property="og:title"       content="Stadi — Learn Skills. Start Earning." />
-  <meta property="og:description" content="Practical vocational training in 15 Kenyan languages. M-Pesa payments. Offline access. Start earning from KES 150." />
-  <meta property="og:image"       content="/logo.png" />
-  <meta property="og:locale"      content="en_KE" />
-  <meta property="og:site_name"   content="Stadi" />
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Stadi — Learn Skills. Start Earning." />
-  <meta name="twitter:description" content="Vocational skills training for Kenya. 15 languages. Offline. M-Pesa." />
-  <meta name="twitter:image"       content="/logo.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
-  <title>Stadi — Learn Skills. Start Earning.</title>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- ── Primary Meta ─────────────────────────────────────── -->
+    <title>Stadi — Learn Skills. Start Earning. In Your Language.</title>
+    <meta name="description" content="Learn practical vocational skills in 15 Kenyan languages and start earning KES 15,000–40,000/month. Solar, phone repair, tailoring, agriculture and more. Pay via M-Pesa from KES 150." />
+    <meta name="keywords" content="vocational training Kenya, learn skills Kenya, M-Pesa courses, online courses Kenya, solar installation Kenya, phone repair course, tailoring course Kenya, Swahili courses" />
+    <meta name="author" content="Stadi Learning Platform Ltd" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://stadi.co.ke/" />
+
+    <!-- ── Open Graph / Facebook ────────────────────────────── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://stadi.co.ke/" />
+    <meta property="og:title" content="Stadi — Learn Skills. Start Earning. In Your Language." />
+    <meta property="og:description" content="5,000+ Kenyans earning KES 15K–40K/month after completing Stadi courses. 15 languages. M-Pesa payments. Works offline." />
+    <meta property="og:image" content="https://stadi.co.ke/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Stadi" />
+    <meta property="og:locale" content="en_KE" />
+
+    <!-- ── Twitter Card ──────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://stadi.co.ke/" />
+    <meta name="twitter:title" content="Stadi — Learn Skills. Start Earning." />
+    <meta name="twitter:description" content="Practical vocational training in 15 Kenyan languages. Solar, phone repair, tailoring & more. From KES 150 via M-Pesa." />
+    <meta name="twitter:image" content="https://stadi.co.ke/og-image.png" />
+
+    <!-- ── WhatsApp / iMessage preview ──────────────────────── -->
+    <meta property="og:image:alt" content="Stadi — Learn Skills, Start Earning in Kenya" />
+
+    <!-- ── Favicon & App Icons ──────────────────────────────── -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#1a6b3c" />
+    <meta name="msapplication-TileColor" content="#1a6b3c" />
+
+    <!-- ── PWA / Mobile ─────────────────────────────────────── -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Stadi" />
+    <meta name="application-name" content="Stadi" />
+
+    <!-- ── Geo targeting ────────────────────────────────────── -->
+    <meta name="geo.region" content="KE" />
+    <meta name="geo.placename" content="Kisumu, Kenya" />
+
+    <!-- ── Structured Data (JSON-LD) ────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "Stadi Learning Platform",
+      "url": "https://stadi.co.ke",
+      "logo": "https://stadi.co.ke/apple-touch-icon.png",
+      "description": "Practical vocational training in 15 Kenyan languages. Learn skills, start earning.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Kisumu",
+        "addressCountry": "KE"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "availableLanguage": ["English", "Swahili"]
+      },
+      "sameAs": [
+        "https://wa.me/254701901244"
+      ]
+    }
+    </script>
+
+    <!-- ── Fonts ─────────────────────────────────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- ── Sitemap ───────────────────────────────────────────── -->
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
