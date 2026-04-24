@@ -1,136 +1,224 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { auth as authAPI } from '../lib/api';
+// src/components/auth/AuthModal.jsx
+//
+// ✅ BUG FIX: This file contained the content of auth.store.js (a Zustand
+//   store — "export default useAuthStore") instead of a React component.
+//   This caused a runtime crash: App.jsx does `<AuthModal />` but got a
+//   Zustand hook instead of a renderable component, throwing:
+//     "AuthModal is not a function" / "Objects are not valid as React children"
+//
+//   Root cause: the developer accidentally saved the updated auth.store.js
+//   content into this file path, overwriting the real modal.
+//
+//   Fix: restore the correct AuthModal component below, reconstructed from
+//   the store API, auth API calls, and UI primitives used elsewhere in the
+//   codebase. No behaviour has been changed beyond restoring the modal.
 
-// ✅ Module-level guard — prevents concurrent fetchMe calls across ALL store instances
-let isFetchingMe = false;
+import React, { useState, useRef } from 'react';
+import { Phone, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
+import { Modal, Button, Input } from '../ui';
+import { auth as authAPI } from '../../lib/api';
+import useAuthStore from '../../store/auth.store';
+import useAppStore  from '../../store/app.store';
 
-// ✅ Module-level logout guard — prevents the redirect loop firing multiple times
-let isLoggingOut = false;
+const STEP = { PHONE: 'phone', OTP: 'otp' };
 
-const useAuthStore = create(
-  persist(
-    (set, get) => ({
-      user:         null,
-      token:        null,
-      refreshToken: null,
-      isLoading:    false,
-      isAuthOpen:   false,
-      isLoggedIn:   false,
+export default function AuthModal() {
+  const { isAuthOpen, closeAuth, setTokens, setUser, fetchMe } = useAuthStore();
+  const { addToast } = useAppStore();
 
-      setTokens: (token, refreshToken) => {
-        localStorage.setItem('stadi_token', token);
-        localStorage.setItem('stadi_refresh', refreshToken);
-        // ✅ Reset logout guard when new tokens are set (user just logged in)
-        isLoggingOut = false;
-        set({ token, refreshToken });
-      },
+  const [step,     setStep]     = useState(STEP.PHONE);
+  const [phone,    setPhone]    = useState('');
+  const [otp,      setOtp]      = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [err,      setErr]      = useState('');
+  const [isNew,    setIsNew]    = useState(false); // true when phone is freshly registered
+  const otpRef = useRef(null);
 
-      // setUser derives all role flags so they are always in sync
-      setUser: (user) => set({
-        user,
-        isLoggedIn:    !!user,
-        isAdmin:       ['admin', 'super_admin'].includes(user?.role),
-        isInstructor:  ['instructor', 'admin', 'super_admin'].includes(user?.role),
-        isFinance:     ['finance', 'admin', 'super_admin'].includes(user?.role),
-        isHR:          ['hr', 'admin', 'super_admin'].includes(user?.role),
-      }),
+  function reset() {
+    setStep(STEP.PHONE);
+    setPhone('');
+    setOtp('');
+    setErr('');
+    setLoading(false);
+    setIsNew(false);
+  }
 
-      // Derived role flags — plain booleans for direct destructuring
-      isAdmin:       false,
-      isInstructor:  false,
-      isFinance:     false,
-      isHR:          false,
+  function handleClose() {
+    reset();
+    closeAuth();
+  }
 
-      openAuth:  () => set({ isAuthOpen: true }),
-      closeAuth: () => set({ isAuthOpen: false }),
+  // ── Step 1: send OTP ──────────────────────────────────────
+  async function handlePhoneSubmit(e) {
+    e.preventDefault();
+    setErr('');
 
-      fetchMe: async () => {
-        // ✅ FIX 1 — No token = not logged in. Return immediately.
-        // This is the root cause of the 401 flood: without this guard,
-        // fetchMe fires → gets 401 → triggers logout → page reloads →
-        // fetchMe fires again → infinite loop at ~1 req/sec.
-        const token = localStorage.getItem('stadi_token');
-        if (!token) return null;
-
-        // ✅ FIX 2 — If a logout is already in progress, don't attempt fetch
-        if (isLoggingOut) return null;
-
-        // ✅ Existing guard — prevents parallel concurrent fetchMe calls
-        if (isFetchingMe) return get().user;
-
-        isFetchingMe = true;
-        set({ isLoading: true });
-
-        try {
-          const res = await authAPI.me();
-          const user = res.data;
-          set({
-            user,
-            isLoggedIn:   !!user,
-            isAdmin:      ['admin', 'super_admin'].includes(user?.role),
-            isInstructor: ['instructor', 'admin', 'super_admin'].includes(user?.role),
-            isFinance:    ['finance', 'admin', 'super_admin'].includes(user?.role),
-            isHR:         ['hr', 'admin', 'super_admin'].includes(user?.role),
-            isLoading:    false,
-          });
-          return user;
-        } catch (err) {
-          set({ isLoading: false });
-          // ✅ FIX 3 — On 401, call logout() only if not already logging out
-          // Previously this could re-trigger the loop
-          if (err?.status === 401 || err?.response?.status === 401) {
-            get().logout();
-          }
-          return null;
-        } finally {
-          // ✅ Always release the fetch lock
-          isFetchingMe = false;
-        }
-      },
-
-      logout: async () => {
-        // ✅ FIX 4 — Prevent logout running more than once simultaneously
-        // Previously: logout() could be called by both the interceptor AND
-        // fetchMe's catch block at the same time, causing a double redirect
-        if (isLoggingOut) return;
-        isLoggingOut = true;
-
-        try { await authAPI.logout(); } catch {}
-
-        localStorage.removeItem('stadi_token');
-        localStorage.removeItem('stadi_refresh');
-
-        set({
-          user:         null,
-          token:        null,
-          refreshToken: null,
-          isLoggedIn:   false,
-          isAdmin:      false,
-          isInstructor: false,
-          isFinance:    false,
-          isHR:         false,
-        });
-
-        // ✅ Release the guard after a short delay so the redirect can complete
-        // before any component tries to call fetchMe again
-        setTimeout(() => { isLoggingOut = false; }, 2000);
-      },
-    }),
-    {
-      name: 'stadi-auth',
-      partialize: (state) => ({
-        token:        state.token,
-        refreshToken: state.refreshToken,
-        user:         state.user,
-        isLoggedIn:   state.isLoggedIn,
-        isAdmin:      state.isAdmin,
-        isInstructor: state.isInstructor,
-        isFinance:    state.isFinance,
-        isHR:         state.isHR,
-      }),
+    const cleaned = phone.trim();
+    if (!/^\+254\d{9}$/.test(cleaned)) {
+      setErr('Enter a valid Kenyan number e.g. +254712345678');
+      return;
     }
-  )
-);
 
-export default useAuthStore;
+    setLoading(true);
+    try {
+      // Try login first; if 404 → register (new user)
+      let devOtp = null;
+      try {
+        const res = await authAPI.login(cleaned);
+        devOtp = res?.data?.dev_otp;
+      } catch (loginErr) {
+        if (loginErr?.status === 404 || loginErr?.statusCode === 404) {
+          const res = await authAPI.register(cleaned);
+          devOtp = res?.data?.dev_otp;
+          setIsNew(true);
+        } else {
+          throw loginErr;
+        }
+      }
+
+      setStep(STEP.OTP);
+      // In dev the OTP is returned in the response; surface it for easy testing
+      if (devOtp) {
+        setOtp(devOtp);
+        addToast(`Dev OTP: ${devOtp}`, 'info', 10000);
+      }
+      // Focus OTP input on next paint
+      setTimeout(() => otpRef.current?.focus(), 100);
+    } catch (e) {
+      setErr(e?.message || 'Could not send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Step 2: verify OTP ────────────────────────────────────
+  async function handleOtpSubmit(e) {
+    e.preventDefault();
+    setErr('');
+
+    const code = otp.trim();
+    if (!/^\d{6}$/.test(code)) {
+      setErr('Enter the 6-digit code sent to your phone.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await authAPI.verifyOtp(phone.trim(), code);
+      const { accessToken, refreshToken, user } = res.data;
+
+      setTokens(accessToken, refreshToken);
+      setUser(user);
+      await fetchMe(); // refresh full user profile
+
+      addToast(`Welcome${user?.name ? ', ' + user.name : ''}!`, 'success', 4000);
+      handleClose();
+    } catch (e) {
+      setErr(e?.message || 'Incorrect or expired code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    setErr('');
+    setLoading(true);
+    try {
+      await authAPI.login(phone.trim());
+      addToast('New code sent!', 'success', 3000);
+    } catch {
+      addToast('Could not resend. Please wait a moment.', 'error', 3000);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Modal
+      isOpen={isAuthOpen}
+      onClose={handleClose}
+      title={step === STEP.PHONE ? 'Sign in to Stadi' : 'Enter your code'}
+    >
+      <div className="p-6">
+
+        {/* ── Phone step ── */}
+        {step === STEP.PHONE && (
+          <form onSubmit={handlePhoneSubmit} className="space-y-5">
+            <p className="text-sm text-stadi-gray">
+              Enter your Kenyan phone number. We'll send a one-time code to verify it's you.
+            </p>
+
+            <Input
+              label="Phone number"
+              type="tel"
+              placeholder="+254712345678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              error={err}
+              autoComplete="tel"
+              autoFocus
+            />
+
+            <Button type="submit" className="w-full" loading={loading} size="lg">
+              <Phone size={16} />
+              {loading ? 'Sending code…' : 'Send code'}
+            </Button>
+
+            <p className="text-xs text-gray-400 text-center">
+              By continuing you agree to our{' '}
+              <a href="/terms" className="underline hover:text-stadi-green">Terms</a> and{' '}
+              <a href="/privacy" className="underline hover:text-stadi-green">Privacy Policy</a>.
+            </p>
+          </form>
+        )}
+
+        {/* ── OTP step ── */}
+        {step === STEP.OTP && (
+          <form onSubmit={handleOtpSubmit} className="space-y-5">
+            <p className="text-sm text-stadi-gray">
+              We sent a 6-digit code to <span className="font-semibold text-stadi-dark">{phone}</span>.
+              {isNew && ' Welcome to Stadi!'}
+            </p>
+
+            <Input
+              label="6-digit code"
+              type="text"
+              inputMode="numeric"
+              pattern="\d{6}"
+              maxLength={6}
+              placeholder="123456"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              error={err}
+              ref={otpRef}
+              autoComplete="one-time-code"
+            />
+
+            <Button type="submit" className="w-full" loading={loading} size="lg">
+              <ShieldCheck size={16} />
+              {loading ? 'Verifying…' : 'Verify & sign in'}
+            </Button>
+
+            <div className="flex items-center justify-between text-sm">
+              <button
+                type="button"
+                onClick={() => { setStep(STEP.PHONE); setErr(''); setOtp(''); }}
+                className="text-stadi-gray hover:text-stadi-dark flex items-center gap-1"
+              >
+                <ArrowLeft size={14} /> Change number
+              </button>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={loading}
+                className="text-stadi-green hover:underline disabled:opacity-50"
+              >
+                Resend code
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </Modal>
+  );
+}
