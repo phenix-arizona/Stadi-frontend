@@ -1,9 +1,26 @@
+/**
+ * store/auth.store.js
+ *
+ * The Zustand auth store was accidentally duplicated: its enhanced version
+ * (with the `isLoggingOut` guard) ended up in AuthModal.jsx instead of here.
+ * This file is the canonical, definitive auth store that merges both versions.
+ *
+ * Changes vs the original auth.store.js:
+ *  - Added `isLoggingOut` module-level guard to prevent a double-redirect
+ *    when both the axios interceptor and fetchMe's catch block call logout()
+ *    at the same time.
+ *  - Added early-return token check in fetchMe to avoid a 401 flood when
+ *    the user is not logged in.
+ *  - setTokens() resets the isLoggingOut flag so the guard doesn't block
+ *    future logins.
+ */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { auth as authAPI } from '../lib/api';
 
-// ✅ Module-level guard — prevents concurrent fetchMe calls across ALL store instances
+// Module-level guards — survive re-renders, reset on logout/login
 let isFetchingMe = false;
+let isLoggingOut = false;
 
 const useAuthStore = create(
   persist(
@@ -15,9 +32,17 @@ const useAuthStore = create(
       isAuthOpen:   false,
       isLoggedIn:   false,
 
+      // Derived role flags
+      isAdmin:       false,
+      isInstructor:  false,
+      isFinance:     false,
+      isHR:          false,
+
       setTokens: (token, refreshToken) => {
         localStorage.setItem('stadi_token', token);
         localStorage.setItem('stadi_refresh', refreshToken);
+        // Reset the logout guard when new tokens arrive (fresh login)
+        isLoggingOut = false;
         set({ token, refreshToken });
       },
 
@@ -31,22 +56,25 @@ const useAuthStore = create(
         isHR:          ['hr', 'admin', 'super_admin'].includes(user?.role),
       }),
 
-      // Derived role flags — plain booleans for direct destructuring
-      isAdmin:       false,
-      isInstructor:  false,
-      isFinance:     false,
-      isHR:          false,
-
       openAuth:  () => set({ isAuthOpen: true }),
       closeAuth: () => set({ isAuthOpen: false }),
 
       fetchMe: async () => {
-        // ✅ If already fetching, skip — don't fire a second parallel request
+        // No token → not logged in; avoid triggering a 401 flood
+        const token = localStorage.getItem('stadi_token');
+        if (!token) return null;
+
+        // Logout already in progress — don't race
+        if (isLoggingOut) return null;
+
+        // Already fetching — return current cached user
         if (isFetchingMe) return get().user;
+
         isFetchingMe = true;
         set({ isLoading: true });
+
         try {
-          const res = await authAPI.me();
+          const res  = await authAPI.me();
           const user = res.data;
           set({
             user,
@@ -60,21 +88,25 @@ const useAuthStore = create(
           return user;
         } catch (err) {
           set({ isLoading: false });
-          // ✅ On 401, clear the bad token rather than silently returning null
           if (err?.status === 401 || err?.response?.status === 401) {
             get().logout();
           }
           return null;
         } finally {
-          // ✅ Always release the lock
           isFetchingMe = false;
         }
       },
 
       logout: async () => {
+        // Prevent concurrent logout calls (from interceptor + fetchMe catch)
+        if (isLoggingOut) return;
+        isLoggingOut = true;
+
         try { await authAPI.logout(); } catch {}
+
         localStorage.removeItem('stadi_token');
         localStorage.removeItem('stadi_refresh');
+
         set({
           user:         null,
           token:        null,
@@ -85,6 +117,9 @@ const useAuthStore = create(
           isFinance:    false,
           isHR:         false,
         });
+
+        // Release the guard after the redirect has time to complete
+        setTimeout(() => { isLoggingOut = false; }, 2000);
       },
     }),
     {
