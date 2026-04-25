@@ -3,6 +3,7 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/favicon.svg',           // FIX: was referencing missing .ico/.png files
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
 ];
