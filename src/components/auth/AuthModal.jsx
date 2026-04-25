@@ -1,224 +1,297 @@
-// src/components/auth/AuthModal.jsx
-//
-// ✅ BUG FIX: This file contained the content of auth.store.js (a Zustand
-//   store — "export default useAuthStore") instead of a React component.
-//   This caused a runtime crash: App.jsx does `<AuthModal />` but got a
-//   Zustand hook instead of a renderable component, throwing:
-//     "AuthModal is not a function" / "Objects are not valid as React children"
-//
-//   Root cause: the developer accidentally saved the updated auth.store.js
-//   content into this file path, overwriting the real modal.
-//
-//   Fix: restore the correct AuthModal component below, reconstructed from
-//   the store API, auth API calls, and UI primitives used elsewhere in the
-//   codebase. No behaviour has been changed beyond restoring the modal.
-
-import React, { useState, useRef } from 'react';
-import { Phone, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
-import { Modal, Button, Input } from '../ui';
+/**
+ * AuthModal.jsx
+ *
+ * Single unified auth flow for Stadi: phone → OTP → signed in.
+ *
+ * ROOT CAUSE OF THE BUG BEING FIXED HERE:
+ * The modal was calling POST /auth/login which requires the user to
+ * already exist in the database. New users received:
+ *   "No account found for this number. Please register first."
+ * — but there was no way to register from the same screen.
+ *
+ * FIX: Always call POST /auth/register (→ authService.registerOrLogin).
+ * That endpoint creates the user if they are new, then sends the OTP
+ * either way. New users and returning users both get an OTP. No
+ * separate "register vs login" distinction is needed in the UI.
+ */
+import React, { useState, useEffect, useRef } from 'react';
+import { Phone, ShieldCheck, RefreshCw, X } from 'lucide-react';
 import { auth as authAPI } from '../../lib/api';
 import useAuthStore from '../../store/auth.store';
 import useAppStore  from '../../store/app.store';
 
 const STEP = { PHONE: 'phone', OTP: 'otp' };
+const RESEND_COOLDOWN = 60; // seconds
+
+// ── Phone normaliser ──────────────────────────────────────────
+// Accepts: 07XXXXXXXX  |  +2547XXXXXXXX  |  2547XXXXXXXX
+function normalisePhone(raw) {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('254') && digits.length === 12) return '+' + digits;
+  if (digits.startsWith('0')   && digits.length === 10)  return '+254' + digits.slice(1);
+  if (digits.startsWith('7')   && digits.length === 9)   return '+254' + digits;
+  return null;
+}
 
 export default function AuthModal() {
-  const { isAuthOpen, closeAuth, setTokens, setUser, fetchMe } = useAuthStore();
+  const { isAuthOpen, closeAuth, setTokens, setUser } = useAuthStore();
   const { addToast } = useAppStore();
 
-  const [step,     setStep]     = useState(STEP.PHONE);
-  const [phone,    setPhone]    = useState('');
-  const [otp,      setOtp]      = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [err,      setErr]      = useState('');
-  const [isNew,    setIsNew]    = useState(false); // true when phone is freshly registered
+  const [step,     setStep]    = useState(STEP.PHONE);
+  const [phone,    setPhone]   = useState('');
+  const [otp,      setOtp]     = useState('');
+  const [loading,  setLoading] = useState(false);
+  const [errorMsg, setError]   = useState('');
+  const [cd,       setCd]      = useState(0);
+
   const otpRef = useRef(null);
 
-  function reset() {
-    setStep(STEP.PHONE);
-    setPhone('');
-    setOtp('');
-    setErr('');
-    setLoading(false);
-    setIsNew(false);
-  }
+  // Reset every time the modal opens
+  useEffect(() => {
+    if (isAuthOpen) {
+      setStep(STEP.PHONE);
+      setPhone('');
+      setOtp('');
+      setError('');
+      setCd(0);
+    }
+  }, [isAuthOpen]);
 
-  function handleClose() {
-    reset();
-    closeAuth();
-  }
+  // Countdown tick
+  useEffect(() => {
+    if (cd <= 0) return;
+    const t = setTimeout(() => setCd(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cd]);
 
-  // ── Step 1: send OTP ──────────────────────────────────────
-  async function handlePhoneSubmit(e) {
-    e.preventDefault();
-    setErr('');
+  // Auto-focus OTP input
+  useEffect(() => {
+    if (step === STEP.OTP) setTimeout(() => otpRef.current?.focus(), 80);
+  }, [step]);
 
-    const cleaned = phone.trim();
-    if (!/^\+254\d{9}$/.test(cleaned)) {
-      setErr('Enter a valid Kenyan number e.g. +254712345678');
+  // ── Step 1: request OTP ─────────────────────────────────────
+  async function handleSendOtp(e) {
+    e?.preventDefault();
+    setError('');
+
+    const formatted = normalisePhone(phone);
+    if (!formatted) {
+      setError('Enter a valid Kenyan number — e.g. 0712 345 678 or +254712345678');
       return;
     }
 
     setLoading(true);
     try {
-      // Try login first; if 404 → register (new user)
-      let devOtp = null;
-      try {
-        const res = await authAPI.login(cleaned);
-        devOtp = res?.data?.dev_otp;
-      } catch (loginErr) {
-        if (loginErr?.status === 404 || loginErr?.statusCode === 404) {
-          const res = await authAPI.register(cleaned);
-          devOtp = res?.data?.dev_otp;
-          setIsNew(true);
-        } else {
-          throw loginErr;
-        }
-      }
+      // KEY FIX: always call /auth/register (registerOrLogin on the backend).
+      // This creates the user if they are new, then sends an OTP.
+      // Returning users also get an OTP — no 404, no "register first" wall.
+      // We must NEVER call auth.login() from this modal because that endpoint
+      // rejects anyone who isn't already in the database.
+      await authAPI.register(formatted);
 
+      setPhone(formatted);
       setStep(STEP.OTP);
-      // In dev the OTP is returned in the response; surface it for easy testing
-      if (devOtp) {
-        setOtp(devOtp);
-        addToast(`Dev OTP: ${devOtp}`, 'info', 10000);
-      }
-      // Focus OTP input on next paint
-      setTimeout(() => otpRef.current?.focus(), 100);
-    } catch (e) {
-      setErr(e?.message || 'Could not send OTP. Please try again.');
+      setCd(RESEND_COOLDOWN);
+    } catch (err) {
+      setError(err?.message || 'Could not send code. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Step 2: verify OTP ────────────────────────────────────
-  async function handleOtpSubmit(e) {
-    e.preventDefault();
-    setErr('');
-
-    const code = otp.trim();
-    if (!/^\d{6}$/.test(code)) {
-      setErr('Enter the 6-digit code sent to your phone.');
-      return;
-    }
+  // ── Step 2: verify OTP ──────────────────────────────────────
+  async function handleVerifyOtp(e) {
+    e?.preventDefault();
+    setError('');
+    if (otp.length !== 6) { setError('Enter the 6-digit code sent to your phone'); return; }
 
     setLoading(true);
     try {
-      const res = await authAPI.verifyOtp(phone.trim(), code);
-      const { accessToken, refreshToken, user } = res.data;
-
-      setTokens(accessToken, refreshToken);
-      setUser(user);
-      await fetchMe(); // refresh full user profile
-
-      addToast(`Welcome${user?.name ? ', ' + user.name : ''}!`, 'success', 4000);
-      handleClose();
-    } catch (e) {
-      setErr(e?.message || 'Incorrect or expired code. Please try again.');
+      const res  = await authAPI.verifyOtp(phone, otp);
+      const data = res.data;
+      setTokens(data.accessToken, data.refreshToken);
+      setUser(data.user);
+      addToast(`Welcome${data.user?.name ? ', ' + data.user.name : ''}! 👋`, 'success');
+      closeAuth();
+    } catch (err) {
+      setError(err?.message || 'Invalid or expired code. Please try again.');
+      setOtp('');
     } finally {
       setLoading(false);
     }
   }
 
+  // ── Resend OTP ───────────────────────────────────────────────
   async function handleResend() {
-    setErr('');
+    if (cd > 0 || loading) return;
     setLoading(true);
+    setError('');
     try {
-      await authAPI.login(phone.trim());
-      addToast('New code sent!', 'success', 3000);
-    } catch {
-      addToast('Could not resend. Please wait a moment.', 'error', 3000);
+      await authAPI.register(phone); // same endpoint — safe to call again
+      setCd(RESEND_COOLDOWN);
+      addToast('New code sent!', 'info');
+    } catch (err) {
+      setError(err?.message || 'Could not resend code.');
     } finally {
       setLoading(false);
     }
   }
+
+  // Auto-submit when 6 digits are entered
+  function handleOtpChange(e) {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setOtp(val);
+    if (val.length === 6) {
+      // Let React flush the state update before submitting
+      setTimeout(() => handleVerifyOtp(), 0);
+    }
+  }
+
+  if (!isAuthOpen) return null;
 
   return (
-    <Modal
-      isOpen={isAuthOpen}
-      onClose={handleClose}
-      title={step === STEP.PHONE ? 'Sign in to Stadi' : 'Enter your code'}
-    >
-      <div className="p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeAuth} />
 
-        {/* ── Phone step ── */}
-        {step === STEP.PHONE && (
-          <form onSubmit={handlePhoneSubmit} className="space-y-5">
-            <p className="text-sm text-stadi-gray">
-              Enter your Kenyan phone number. We'll send a one-time code to verify it's you.
-            </p>
+      {/* Card */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
 
-            <Input
-              label="Phone number"
-              type="tel"
-              placeholder="+254712345678"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              error={err}
-              autoComplete="tel"
-              autoFocus
-            />
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4">
+          <button
+            onClick={closeAuth}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
 
-            <Button type="submit" className="w-full" loading={loading} size="lg">
-              <Phone size={16} />
-              {loading ? 'Sending code…' : 'Send code'}
-            </Button>
-
-            <p className="text-xs text-gray-400 text-center">
-              By continuing you agree to our{' '}
-              <a href="/terms" className="underline hover:text-stadi-green">Terms</a> and{' '}
-              <a href="/privacy" className="underline hover:text-stadi-green">Privacy Policy</a>.
-            </p>
-          </form>
-        )}
-
-        {/* ── OTP step ── */}
-        {step === STEP.OTP && (
-          <form onSubmit={handleOtpSubmit} className="space-y-5">
-            <p className="text-sm text-stadi-gray">
-              We sent a 6-digit code to <span className="font-semibold text-stadi-dark">{phone}</span>.
-              {isNew && ' Welcome to Stadi!'}
-            </p>
-
-            <Input
-              label="6-digit code"
-              type="text"
-              inputMode="numeric"
-              pattern="\d{6}"
-              maxLength={6}
-              placeholder="123456"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              error={err}
-              ref={otpRef}
-              autoComplete="one-time-code"
-            />
-
-            <Button type="submit" className="w-full" loading={loading} size="lg">
-              <ShieldCheck size={16} />
-              {loading ? 'Verifying…' : 'Verify & sign in'}
-            </Button>
-
-            <div className="flex items-center justify-between text-sm">
-              <button
-                type="button"
-                onClick={() => { setStep(STEP.PHONE); setErr(''); setOtp(''); }}
-                className="text-stadi-gray hover:text-stadi-dark flex items-center gap-1"
-              >
-                <ArrowLeft size={14} /> Change number
-              </button>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={loading}
-                className="text-stadi-green hover:underline disabled:opacity-50"
-              >
-                Resend code
-              </button>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-stadi-green-light flex items-center justify-center">
+              {step === STEP.PHONE
+                ? <Phone size={17} className="text-stadi-green" />
+                : <ShieldCheck size={17} className="text-stadi-green" />}
             </div>
-          </form>
-        )}
+            <div>
+              <h2 className="text-lg font-bold text-stadi-dark leading-tight">
+                {step === STEP.PHONE ? 'Sign in to Stadi' : 'Verify your number'}
+              </h2>
+              <p className="text-xs text-stadi-gray">
+                {step === STEP.PHONE
+                  ? "Enter your Kenyan phone number. We'll send a one-time code to verify it's you."
+                  : `Code sent to ${phone}`}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 pb-6">
+          <hr className="border-gray-100 mb-5" />
+
+          {/* ── Phone step ── */}
+          {step === STEP.PHONE && (
+            <form onSubmit={handleSendOtp} noValidate>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-stadi-dark mb-1.5">
+                  Phone number
+                </label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  autoFocus
+                  placeholder="+254793060863"
+                  value={phone}
+                  onChange={e => { setPhone(e.target.value); setError(''); }}
+                  className={`w-full px-4 py-3 rounded-xl border-2 text-sm transition-all
+                    focus:outline-none focus:ring-2 focus:ring-stadi-green focus:border-transparent
+                    ${errorMsg ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}
+                />
+                {errorMsg && (
+                  <p className="text-red-500 text-xs mt-1.5">{errorMsg}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={!phone.trim() || loading}
+                className="w-full btn-primary flex items-center justify-center gap-2 py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <Phone size={15} />}
+                Send code
+              </button>
+            </form>
+          )}
+
+          {/* ── OTP step ── */}
+          {step === STEP.OTP && (
+            <form onSubmit={handleVerifyOtp} noValidate>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-stadi-dark mb-1.5">
+                  Enter the 6-digit code
+                </label>
+                <input
+                  ref={otpRef}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otp}
+                  onChange={handleOtpChange}
+                  placeholder="------"
+                  className={`w-full text-center text-3xl font-bold tracking-[0.4em] py-4 rounded-xl border-2 transition-all
+                    focus:outline-none focus:ring-2 focus:ring-stadi-green focus:border-transparent
+                    ${errorMsg ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
+                />
+                {errorMsg && (
+                  <p className="text-red-500 text-xs mt-1.5 text-center">{errorMsg}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={otp.length !== 6 || loading}
+                className="w-full btn-primary flex items-center justify-center gap-2 py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading
+                  ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <ShieldCheck size={15} />}
+                Verify &amp; Sign in
+              </button>
+
+              <div className="flex items-center justify-between mt-4 text-sm">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={cd > 0 || loading}
+                  className="flex items-center gap-1 text-stadi-green font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:underline text-xs"
+                >
+                  <RefreshCw size={12} />
+                  {cd > 0 ? `Resend in ${cd}s` : 'Resend code'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setStep(STEP.PHONE); setOtp(''); setError(''); }}
+                  className="text-xs text-stadi-gray hover:text-stadi-dark hover:underline"
+                >
+                  Change number
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Legal */}
+          <p className="text-center text-xs text-gray-400 mt-5">
+            By continuing you agree to our{' '}
+            <a href="/terms" className="underline hover:text-stadi-dark" onClick={closeAuth}>Terms</a>
+            {' '}and{' '}
+            <a href="/privacy" className="underline hover:text-stadi-dark" onClick={closeAuth}>Privacy Policy</a>.
+          </p>
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }

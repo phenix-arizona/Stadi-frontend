@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stadi-v2';
+const CACHE_NAME = 'stadi-v3'; // bumped: fixes navigation fetch handler
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -21,18 +21,40 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Pass through: non-GET, non-http, and all API calls — never cache these
   if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) return;
   if (url.pathname.startsWith('/api/')) return;
 
+  // FIX 1: Navigation requests (HTML page loads e.g. /teach, /courses, /instructor)
+  // must always fall back to /index.html so the React SPA can handle routing.
+  // Without this, a network failure on a page load returns an error instead of
+  // the app shell — causing the "Failed to fetch" error on the /teach route.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // FIX 2: Static assets (JS chunks, CSS, images) — cache-first with network fallback.
+  // The original code had an unhandled rejection when networkFetch failed and there
+  // was no cached version (e.g. a new JS chunk after a deploy). Now we catch that
+  // and return a safe undefined rather than letting the promise reject uncaught.
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      });
+      const networkFetch = fetch(event.request)
+        .then((response) => {
+          // Only cache valid same-origin responses — never cache opaque responses
+          // from CDNs (status 0) as we cannot inspect them for errors
+          if (response.ok && response.type !== 'opaque') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => cached); // FIX 2: on network error, fall back to cache silently
+
       return cached || networkFetch;
     })
   );
