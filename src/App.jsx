@@ -20,12 +20,13 @@ import TermsPage         from './pages/Terms';
 import RefundPage        from './pages/Refund';
 import SupportPage       from './pages/Support';
 
-const LearnPage      = React.lazy(() => import('./pages/Learn'));
-const ProfilePage    = React.lazy(() => import('./pages/Profile'));
-const AdminPage      = React.lazy(() => import('./pages/Admin'));
-const InstructorPage = React.lazy(() => import('./pages/Instructor'));
-const FinancePage    = React.lazy(() => import('./pages/Finance'));
-const HRPage         = React.lazy(() => import('./pages/HR'));
+const LearnPage               = React.lazy(() => import('./pages/Learn'));
+const ProfilePage             = React.lazy(() => import('./pages/Profile'));
+const AdminPage               = React.lazy(() => import('./pages/Admin'));
+const InstructorPage          = React.lazy(() => import('./pages/Instructor'));
+const InstructorOnboardingPage = React.lazy(() => import('./pages/Instructoronboarding'));
+const FinancePage             = React.lazy(() => import('./pages/Finance'));
+const HRPage                  = React.lazy(() => import('./pages/HR'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -119,6 +120,10 @@ export default function App() {
             {/* ── Role-restricted ─────────────────────────────── */}
             <Route path="/admin/*"                     element={<ProtectedRoute><AdminRoute><AdminPage /></AdminRoute></ProtectedRoute>} />
             <Route path="/instructor/*"                element={<ProtectedRoute><InstructorPage /></ProtectedRoute>} />
+            {/* /teach is the public entry point linked from the footer
+                "Become an Instructor" CTA. Wrapping in ProtectedRoute
+                prompts unauthenticated visitors to sign in first. */}
+            <Route path="/teach"                       element={<ProtectedRoute><InstructorOnboardingPage /></ProtectedRoute>} />
             <Route path="/finance/*"                   element={<ProtectedRoute><FinanceRoute><FinancePage /></FinanceRoute></ProtectedRoute>} />
             <Route path="/hr/*"                        element={<ProtectedRoute><HRRoute><HRPage /></HRRoute></ProtectedRoute>} />
 
