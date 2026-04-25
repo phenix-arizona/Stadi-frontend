@@ -42,13 +42,18 @@ const DIFFICULTIES = [
   { value: 'advanced',     label: 'Advanced' },
 ];
 
+// Pricing tiers aligned with the KES 500 floor policy.
+// Starter (500–999): foundation, 1–2 skill courses.
+// Standard (1,000–1,999): core vocational programmes.
+// Advanced (2,000–3,499): multi-module, deeper skill sets.
+// Premium (3,500+): comprehensive professional courses.
 const PRICE_RANGES = [
-  { value: '',         label: 'Any Price' },
-  { value: '0-0',      label: 'Free' },
-  { value: '0-200',    label: 'Under KES 200' },
-  { value: '200-300',  label: 'KES 200–300' },
-  { value: '300-500',  label: 'KES 300–500' },
-  { value: '500-9999', label: 'KES 500+' },
+  { value: '',           label: 'Any Price' },
+  { value: '0-0',        label: 'Free' },
+  { value: '500-999',    label: 'KES 500–999 · Starter' },
+  { value: '1000-1999',  label: 'KES 1,000–1,999 · Standard' },
+  { value: '2000-3499',  label: 'KES 2,000–3,499 · Advanced' },
+  { value: '3500-99999', label: 'KES 3,500+ · Premium' },
 ];
 
 const LANGUAGES = ['english','swahili','dholuo','luhya','kikuyu','kalenjin','kamba','kisii'];
@@ -114,7 +119,7 @@ export default function CoursesPage() {
     limit: 12,
     ...(category   && { category }),
     ...(difficulty && { difficulty }),
-    ...(priceRange && { minPrice: minPrice || 0, maxPrice: maxPrice || 9999 }),
+    ...(priceRange && { minPrice: minPrice || 0, maxPrice: maxPrice || 99999 }),
     ...(language   && { language }),
   };
 

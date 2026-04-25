@@ -674,7 +674,7 @@ function CourseSettings({ course, courseId }) {
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green resize-none" />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Price (KES)" type="number" value={form.price_kes} onChange={set('price_kes')} placeholder="e.g. 300" />
+          <Input label="Price (KES)" type="number" value={form.price_kes} onChange={set('price_kes')} placeholder="e.g. 500" />
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1.5">Difficulty</label>
             <select value={form.difficulty} onChange={set('difficulty')}
@@ -685,6 +685,10 @@ function CourseSettings({ course, courseId }) {
             </select>
           </div>
         </div>
+        {/* Pricing guide — shown to instructor while editing */}
+        <p className="text-xs text-gray-400 -mt-2">
+          Pricing guide: Starter KES 500–999 · Standard KES 1,000–1,999 · Advanced KES 2,000–3,499 · Premium KES 3,500+. Use 0 for a free course.
+        </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
@@ -739,7 +743,10 @@ function NewCourseForm({ onSuccess }) {
   });
   const toggleLang = code => setForm(f => ({ ...f, languages: f.languages.includes(code) ? f.languages.filter(l=>l!==code) : [...f.languages,code] }));
   const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
-  const valid = form.title && form.categoryId && form.priceKes && form.description;
+  // Pricing policy: paid courses >= KES 500; 0 is accepted for free courses.
+  const priceNum = parseInt(form.priceKes, 10);
+  const priceValid = !isNaN(priceNum) && (priceNum === 0 || priceNum >= 500);
+  const valid = form.title && form.categoryId && form.priceKes !== '' && priceValid && form.description;
   return (
     <div className="max-w-2xl">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
@@ -751,7 +758,7 @@ function NewCourseForm({ onSuccess }) {
             {cats.map(c=><option key={c.id} value={c.id}>{c.icon_emoji} {c.name}</option>)}
           </select></div>
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Price (KES) *" type="number" value={form.priceKes} onChange={set('priceKes')} placeholder="300" />
+          <Input label="Price (KES) *" type="number" value={form.priceKes} onChange={set('priceKes')} placeholder="500" min="500" />
           <div><label className="block text-sm font-medium text-gray-900 mb-1.5">Difficulty</label>
             <select value={form.difficulty} onChange={set('difficulty')} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green">
               <option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option>

@@ -88,7 +88,7 @@ const HOW = [
   {
     step:'2', Icon: CreditCard, title:'Pay via M-Pesa',
     image:'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=120&fit=crop&auto=format',
-    desc:'From KES 150. One tap. No bank, no card, no hassle.',
+    desc:'From KES 500. One tap. No bank, no card, no hassle.',
   },
   {
     step:'3', Icon: Download, title:'Learn offline',
@@ -116,7 +116,7 @@ const WHY = [
   { icon:Wifi,      title:'Offline — no data bill',     desc:'Download on Wi-Fi, study without data. Built for rural Kenya.' },
   { icon:TrendingUp,title:'Every course shows earnings', desc:'Real income data from graduates in your county before you pay.' },
   { icon:BadgeCheck,title:'KNQA-aligned certificates',  desc:"Recognised by employers. Backed by Kenya's qualifications framework." },
-  { icon:Smartphone,title:'M-Pesa, KES 150',            desc:'No bank account needed. Pay the same way you pay for everything else.' },
+  { icon:Smartphone,title:'M-Pesa, from KES 500',       desc:'No bank account needed. Pay the same way you pay for everything else.' },
   { icon:Users,     title:'Kenyan instructors',          desc:'Learn from artisans who know local tools, suppliers, and market rates.' },
 ];
 
@@ -236,7 +236,7 @@ export default function HomePage() {
                 offline, via M-Pesa, on any Android phone.
                 <br className="hidden sm:block" />
                 <span className="text-white/60 text-base mt-1 block">
-                  5,000+ Kenyans already earning. First course from KES 150.
+                  5,000+ Kenyans already earning. First course from KES 500.
                 </span>
               </p>
 
