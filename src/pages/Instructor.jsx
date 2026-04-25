@@ -674,7 +674,16 @@ function CourseSettings({ course, courseId }) {
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green resize-none" />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Price (KES)" type="number" value={form.price_kes} onChange={set('price_kes')} placeholder="e.g. 500" />
+          {/* BUG FIX: same as new-course form — use a select so instructors
+               can only pick the three canonical price points. */}
+          <div><label className="block text-sm font-medium text-gray-900 mb-1.5">Price (KES)</label>
+            <select value={form.price_kes} onChange={set('price_kes')} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green">
+              <option value="0">Free</option>
+              <option value="500">KES 500 · Starter</option>
+              <option value="1000">KES 1,000 · Standard</option>
+              <option value="2000">KES 2,000 · Advanced</option>
+            </select>
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1.5">Difficulty</label>
             <select value={form.difficulty} onChange={set('difficulty')}
@@ -687,7 +696,7 @@ function CourseSettings({ course, courseId }) {
         </div>
         {/* Pricing guide — shown to instructor while editing */}
         <p className="text-xs text-gray-400 -mt-2">
-          Pricing guide: Starter KES 500–999 · Standard KES 1,000–1,999 · Advanced KES 2,000–3,499 · Premium KES 3,500+. Use 0 for a free course.
+          Pricing guide: Starter KES 500 · Standard KES 1,000 · Advanced KES 2,000. Use 0 for a free course. {/* BUG FIX: matched to canonical tiers */}
         </p>
       </div>
 
@@ -743,9 +752,11 @@ function NewCourseForm({ onSuccess }) {
   });
   const toggleLang = code => setForm(f => ({ ...f, languages: f.languages.includes(code) ? f.languages.filter(l=>l!==code) : [...f.languages,code] }));
   const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
-  // Pricing policy: paid courses >= KES 500; 0 is accepted for free courses.
+  // BUG FIX: original validation allowed any value >= 500 (e.g. 750, 1300).
+  // CORRECT: Only canonical tiers are valid — 0, 500, 1000, 2000.
+  const CANONICAL_PRICES = [0, 500, 1000, 2000];
   const priceNum = parseInt(form.priceKes, 10);
-  const priceValid = !isNaN(priceNum) && (priceNum === 0 || priceNum >= 500);
+  const priceValid = !isNaN(priceNum) && CANONICAL_PRICES.includes(priceNum);
   const valid = form.title && form.categoryId && form.priceKes !== '' && priceValid && form.description;
   return (
     <div className="max-w-2xl">
@@ -758,7 +769,19 @@ function NewCourseForm({ onSuccess }) {
             {cats.map(c=><option key={c.id} value={c.id}>{c.icon_emoji} {c.name}</option>)}
           </select></div>
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Price (KES) *" type="number" value={form.priceKes} onChange={set('priceKes')} placeholder="500" min="500" />
+          {/* BUG FIX: replaced free-text number input with a select.
+               A text box let instructors type arbitrary values (e.g. 750) that
+               pass client validation but fail the DB CHECK constraint.
+               A select enforces the three canonical tiers at the UI level. */}
+          <div><label className="block text-sm font-medium text-gray-900 mb-1.5">Price (KES) *</label>
+            <select value={form.priceKes} onChange={set('priceKes')} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green">
+              <option value="">Select price</option>
+              <option value="0">Free</option>
+              <option value="500">KES 500 · Starter</option>
+              <option value="1000">KES 1,000 · Standard</option>
+              <option value="2000">KES 2,000 · Advanced</option>
+            </select>
+          </div>
           <div><label className="block text-sm font-medium text-gray-900 mb-1.5">Difficulty</label>
             <select value={form.difficulty} onChange={set('difficulty')} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-stadi-green">
               <option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option>
@@ -989,7 +1012,7 @@ export default function InstructorPage() {
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <h3 className="font-bold text-gray-900 mb-3 text-sm">Revenue Share</h3>
               <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex items-start gap-2"><CheckCircle size={14} className="text-stadi-green mt-0.5 shrink-0"/>You earn <strong>70%</strong> of every sale · Stadi keeps 30%</div>
+                <div className="flex items-start gap-2"><CheckCircle size={14} className="text-stadi-green mt-0.5 shrink-0"/>You earn <strong>40%</strong> of every sale · Stadi keeps 60% {/* BUG FIX: was 70/30 — backend credits 40/60 (mpesa.service.js INSTRUCTOR_SHARE_PCT=40) */}</div>
                 <div className="flex items-start gap-2"><CheckCircle size={14} className="text-stadi-green mt-0.5 shrink-0"/>Payments processed within <strong>7 days</strong> of month-end</div>
                 <div className="flex items-start gap-2"><CheckCircle size={14} className="text-stadi-green mt-0.5 shrink-0"/>Minimum payout <strong>KES 1,000</strong> via M-Pesa B2C</div>
               </div>

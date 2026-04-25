@@ -42,18 +42,17 @@ const DIFFICULTIES = [
   { value: 'advanced',     label: 'Advanced' },
 ];
 
-// Pricing tiers aligned with the KES 500 floor policy.
-// Starter (500–999): foundation, 1–2 skill courses.
-// Standard (1,000–1,999): core vocational programmes.
-// Advanced (2,000–3,499): multi-module, deeper skill sets.
-// Premium (3,500+): comprehensive professional courses.
+// BUG FIX: Old ranges (500–999, 1000–1999, 2000–3499, 3500+) were based on
+// arbitrary bands. After migration 004 all paid courses sit at exactly one of
+// three canonical price points: 500, 1000, or 2000. Broad ranges would lump
+// multiple tiers together. Exact-match ranges (min === max) keep each filter
+// tight and consistent with the DB constraint and the pricing guide copy.
 const PRICE_RANGES = [
-  { value: '',           label: 'Any Price' },
-  { value: '0-0',        label: 'Free' },
-  { value: '500-999',    label: 'KES 500–999 · Starter' },
-  { value: '1000-1999',  label: 'KES 1,000–1,999 · Standard' },
-  { value: '2000-3499',  label: 'KES 2,000–3,499 · Advanced' },
-  { value: '3500-99999', label: 'KES 3,500+ · Premium' },
+  { value: '',          label: 'Any Price'          },
+  { value: '0-0',       label: 'Free'               },
+  { value: '500-500',   label: 'KES 500 · Starter'   },
+  { value: '1000-1000', label: 'KES 1,000 · Standard' },
+  { value: '2000-2000', label: 'KES 2,000 · Advanced'  },
 ];
 
 const LANGUAGES = ['english','swahili','dholuo','luhya','kikuyu','kalenjin','kamba','kisii'];
