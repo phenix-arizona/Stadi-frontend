@@ -1,6 +1,26 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import useAuthStore  from './store/auth.store';
+
+// ── useStoreHydration ─────────────────────────────────────────
+// Returns true once the Zustand persist middleware has finished
+// rehydrating the store from localStorage. Until then, isLoggedIn
+// is always false — even for logged-in users — so any auth check
+// must wait for this before making routing decisions.
+function useStoreHydration() {
+  const [hydrated, setHydrated] = useState(
+    // If already hydrated (e.g. same-session navigation), start as true
+    useAuthStore.persist?.hasHydrated?.() ?? false
+  );
+  useEffect(() => {
+    // Subscribe to the hydration finish event
+    const unsub = useAuthStore.persist?.onFinishHydration?.(() => setHydrated(true));
+    // Also check immediately in case it already finished before we subscribed
+    if (useAuthStore.persist?.hasHydrated?.()) setHydrated(true);
+    return () => unsub?.();
+  }, []);
+  return hydrated;
+}
 import useAppStore   from './store/app.store';
 import Layout        from './components/layout';
 import AuthModal     from './components/auth/AuthModal';
@@ -36,7 +56,30 @@ function ScrollToTop() {
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn, openAuth } = useAuthStore();
-  useEffect(() => { if (!isLoggedIn) openAuth(); }, [isLoggedIn]);
+
+  // BUG FIX: Zustand persist rehydrates from localStorage asynchronously.
+  // On the first render cycle isLoggedIn is always false — even for a
+  // legitimately logged-in user — because the persisted state hasn't been
+  // read yet. Checking isLoggedIn synchronously caused the login modal to
+  // flash open and the route to return null immediately after every login
+  // and on every page refresh.
+  //
+  // Fix: use useStoreHydration() to wait for the persist layer to finish
+  // loading before making the auth decision. During hydration we show a
+  // spinner so the user sees a loading state instead of a login modal flash.
+  const hydrated = useStoreHydration();
+
+  useEffect(() => {
+    if (hydrated && !isLoggedIn) openAuth();
+  }, [hydrated, isLoggedIn]);
+
+  // Still hydrating — show spinner, do not open auth modal yet
+  if (!hydrated) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-stadi-green border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
   if (!isLoggedIn) return null;
   return children;
 }
