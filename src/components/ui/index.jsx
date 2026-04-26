@@ -46,13 +46,22 @@ export function Badge({ children, variant = 'green', className = '' }) {
 }
 
 // ── Input ─────────────────────────────────────────────────────
-export function Input({ label, error, prefix, className = '', ...props }) {
+// Uses React.forwardRef so callers can pass ref={someRef} and have it
+// land on the native <input> element. Without forwardRef, React warns:
+//   "Function components cannot be given refs"
+// and the ref is silently ignored (e.g. otpRef.current stays null,
+// breaking programmatic focus in AuthModal).
+export const Input = React.forwardRef(function Input(
+  { label, error, prefix, className = '', ...props },
+  ref
+) {
   return (
     <div className="w-full">
       {label && <label className="block text-sm font-medium text-stadi-dark mb-1.5">{label}</label>}
       <div className="relative">
         {prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">{prefix}</span>}
         <input
+          ref={ref}
           className={`w-full px-4 py-3 rounded-xl border transition-all duration-150
             focus:outline-none focus:ring-2 focus:ring-stadi-green focus:border-transparent
             placeholder-gray-400
@@ -65,7 +74,7 @@ export function Input({ label, error, prefix, className = '', ...props }) {
       {error && <p className="text-red-500 text-xs mt-1.5">{error}</p>}
     </div>
   );
-}
+});
 
 // ── Skeleton ──────────────────────────────────────────────────
 export function Skeleton({ className = '', ...props }) {
