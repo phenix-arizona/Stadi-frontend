@@ -55,26 +55,25 @@ function ScrollToTop() {
 }
 
 function ProtectedRoute({ children }) {
-  const { isLoggedIn, openAuth } = useAuthStore();
-
-  // BUG FIX: Zustand persist rehydrates from localStorage asynchronously.
-  // On the first render cycle isLoggedIn is always false — even for a
-  // legitimately logged-in user — because the persisted state hasn't been
-  // read yet. Checking isLoggedIn synchronously caused the login modal to
-  // flash open and the route to return null immediately after every login
-  // and on every page refresh.
-  //
-  // Fix: use useStoreHydration() to wait for the persist layer to finish
-  // loading before making the auth decision. During hydration we show a
-  // spinner so the user sees a loading state instead of a login modal flash.
+  const { isLoggedIn, isLoading, openAuth } = useAuthStore();
   const hydrated = useStoreHydration();
 
-  useEffect(() => {
-    if (hydrated && !isLoggedIn) openAuth();
-  }, [hydrated, isLoggedIn]);
+  // Auth decision must wait for BOTH:
+  //  1. Zustand persist to finish rehydrating from localStorage (hydrated)
+  //  2. Any in-flight fetchMe call to complete (isLoading)
+  //
+  // Without the isLoading guard, a fetchMe triggered by a Dashboard child
+  // component can temporarily set isLoggedIn → false mid-flight (e.g. when
+  // the server response shape is unexpected), causing ProtectedRoute to
+  // return null and fire openAuth() even for a legitimately logged-in user.
+  const pending = !hydrated || isLoading;
 
-  // Still hydrating — show spinner, do not open auth modal yet
-  if (!hydrated) return (
+  useEffect(() => {
+    if (!pending && !isLoggedIn) openAuth();
+  }, [pending, isLoggedIn]);
+
+  // Still hydrating or fetchMe in flight — show spinner, never redirect yet
+  if (pending) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-4 border-stadi-green border-t-transparent rounded-full animate-spin" />
     </div>

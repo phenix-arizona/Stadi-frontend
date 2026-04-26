@@ -6,10 +6,25 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach token on every request
+// Endpoints that must never receive an Authorization header.
+// Sending a stale token to these causes a 401 → refresh → 401 death loop.
+const PUBLIC_ENDPOINTS = [
+  '/auth/register',
+  '/auth/login',
+  '/auth/verify-otp',
+  '/auth/refresh',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
+
+const isPublic = (url = '') => PUBLIC_ENDPOINTS.some((p) => url.includes(p));
+
+// Attach token on every request — except public auth endpoints
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('stadi_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (!isPublic(config.url)) {
+    const token = localStorage.getItem('stadi_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -40,7 +55,7 @@ api.interceptors.response.use(
   async (err) => {
     const original = err.config;
 
-    if (err.response?.status === 401 && !original._retry) {
+    if (err.response?.status === 401 && !original._retry && !isPublic(original.url)) {
       original._retry = true;
 
       const refresh = localStorage.getItem('stadi_refresh');
