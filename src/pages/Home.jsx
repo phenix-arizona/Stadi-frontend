@@ -97,7 +97,7 @@ const HOW = [
   },
   {
     step:'4', Icon: Trophy, title:'Get certified',
-    image:'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=120&h=120&fit=crop&auto=format',
+    image:'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=120&h=120&fit=crop&auto=format',
     desc:'Pass the test, earn your KNQA-aligned certificate, show it to clients.',
   },
 ];

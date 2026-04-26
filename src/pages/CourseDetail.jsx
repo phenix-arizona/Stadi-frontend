@@ -852,7 +852,7 @@ export function CertificateVerifyPage() {
     <div className="max-w-lg mx-auto px-4 py-20 text-center">
       <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4">
         <img
-          src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=64&h=64&fit=crop&auto=format"
+          src="https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=64&h=64&fit=crop&auto=format"
           alt="Certificate"
           className="w-full h-full object-cover"
         />

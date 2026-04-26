@@ -52,18 +52,35 @@ api.interceptors.response.use(
       }
 
       try {
-        // ✅ Reuse an in-flight refresh instead of firing a new one
+        // Reuse an in-flight refresh instead of firing a new one
         if (!refreshPromise) {
-          refreshPromise = axios
-            .post('/api/auth/refresh', { refreshToken: refresh })
-            .finally(() => { refreshPromise = null; }); // ✅ always release
+          // BUG FIX: use the  instance (not raw axios) so the response
+          // interceptor unwraps res.data automatically. The old code used
+          // raw axios.post which returns the full axios response object, so
+          // res.data.data.accessToken was going one level too deep —
+          // returning undefined as the new token, which caused an immediate
+          // second 401 → doLogout() → redirect to login right after sign-in.
+          refreshPromise = api
+            .post('/auth/refresh', { refreshToken: refresh })
+            .finally(() => { refreshPromise = null; });
         }
 
-        const res = await refreshPromise;
-        const newToken = res.data.data.accessToken;
+        const refreshed = await refreshPromise;
+
+        // BUG FIX: api instance unwraps res.data, so the shape is:
+        //   refreshed = { success: true, data: { accessToken, refreshToken, expiresIn } }
+        // Not refreshed.data.data — just refreshed.data
+        const newToken = refreshed?.data?.accessToken || refreshed?.accessToken;
+
+        if (!newToken) {
+          // Refresh returned a response but no token — treat as failure
+          doLogout();
+          return Promise.reject(new Error('Refresh returned no token'));
+        }
+
         localStorage.setItem('stadi_token', newToken);
 
-        // ✅ Also update the Zustand persisted token
+        // Also update the Zustand persisted token so the store stays in sync
         try {
           const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
           if (stored.state) {
@@ -75,7 +92,7 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
-        // ✅ Refresh failed — full logout, stop the loop
+        // Refresh failed — full logout, stop the loop
         doLogout();
         return Promise.reject(err.response?.data || err);
       }
