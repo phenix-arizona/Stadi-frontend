@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery }          from '@tanstack/react-query';
 import { Flame, Award, BookOpen, TrendingUp, Share2, ChevronRight, Gift, Bell, Clock, Check } from 'lucide-react';
 import { userAPI, streaks as streakAPI, certificates, referrals, bookmarks, notifications as notifAPI } from '../lib/api';
@@ -8,23 +8,81 @@ import useAuthStore from '../store/auth.store';
 import CourseCard from '../components/course/CourseCard';
 
 export default function DashboardPage() {
-  const { user, isAdmin, isInstructor, isFinance, isHR, fetchMe } = useAuthStore();
+  const {
+    user,
+    isAdmin, isInstructor, isFinance, isHR,
+    fetchMe,
+    authReady,     // ⬅️ NEW gate from auth.store.js
+    isLoggedIn,
+  } = useAuthStore();
 
   const userIsAdmin      = typeof isAdmin      === 'function' ? isAdmin()      : isAdmin;
   const userIsInstructor = typeof isInstructor === 'function' ? isInstructor() : isInstructor;
   const userIsFinance    = typeof isFinance     === 'function' ? isFinance()     : isFinance;
   const userIsHR         = typeof isHR          === 'function' ? isHR()          : isHR;
 
-  // Refresh user role from server on mount — ensures role changes by admin
-  // are reflected immediately without requiring the user to log out/in
-  React.useEffect(() => { fetchMe(); }, []);
+  // Refresh user role from server on mount — but only AFTER the persist
+  // store has rehydrated, otherwise the request fires with no token,
+  // 401s, and the response interceptor logs us out → redirect loop.
+  React.useEffect(() => {
+    if (authReady && isLoggedIn) fetchMe();
+  }, [authReady, isLoggedIn]);
 
-  const { data: statsData,  isLoading: statsLoading }  = useQuery({ queryKey: ['user','stats'],        queryFn: userAPI.stats });
-  const { data: contData }                              = useQuery({ queryKey: ['progress','continue'], queryFn: () => import('../lib/api').then(m=>m.progress.continuelearning()) });
-  const { data: streakData }                            = useQuery({ queryKey: ['streak','my'],         queryFn: streakAPI.get });
-  const { data: enrollData, isLoading: enrollLoading }  = useQuery({ queryKey: ['user','enrollments'], queryFn: userAPI.enrollments });
-  const { data: certsData }                             = useQuery({ queryKey: ['certificates','my'],   queryFn: certificates.list });
-  const { data: refData }                               = useQuery({ queryKey: ['referral','my'],       queryFn: referrals.get });
+  // 🔧 FIX: do not render or query anything until auth is ready.
+  // Without this gate the 6 queries below fire on first paint, race the
+  // token write from verifyOtp, and the first 401 triggers logout.
+  if (!authReady) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-40 rounded-2xl" />
+      </div>
+    );
+  }
+
+  // Auth ready but no session → bounce to home where AuthModal lives.
+  if (!isLoggedIn || !user) {
+    return <Navigate to="/?auth=required" replace />;
+  }
+
+  // ── Queries: gated on `authReady && isLoggedIn` so they never fire
+  //    before the token is in localStorage. ───────────────────────────
+  const queryEnabled = authReady && !!user;
+
+  const { data: statsData,  isLoading: statsLoading }  = useQuery({
+    queryKey: ['user','stats'],
+    queryFn: userAPI.stats,
+    enabled: queryEnabled,
+  });
+  const { data: contData } = useQuery({
+    queryKey: ['progress','continue'],
+    queryFn: () => import('../lib/api').then(m => m.progress.continuelearning()),
+    enabled: queryEnabled,
+  });
+  const { data: streakData } = useQuery({
+    queryKey: ['streak','my'],
+    queryFn: streakAPI.get,
+    enabled: queryEnabled,
+  });
+  const { data: enrollData, isLoading: enrollLoading } = useQuery({
+    queryKey: ['user','enrollments'],
+    queryFn: userAPI.enrollments,
+    enabled: queryEnabled,
+  });
+  const { data: certsData } = useQuery({
+    queryKey: ['certificates','my'],
+    queryFn: certificates.list,
+    enabled: queryEnabled,
+  });
+  const { data: refData } = useQuery({
+    queryKey: ['referral','my'],
+    queryFn: referrals.get,
+    enabled: queryEnabled,
+  });
 
   const stats    = statsData?.data  || {};
   const streak   = streakData?.data || {};
@@ -170,15 +228,12 @@ export default function DashboardPage() {
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
                 {enrolled.map(e => {
-                  // Compute progress percentage from enrollment data
                   const total    = e.courses?.total_lessons || 0;
                   const done     = e.lessons_done || 0;
                   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
 
-                  // Merge enrollment data into the course shape CourseCard expects
                   const course = {
                     ...e.courses,
-                    // completed_at lives on the enrollment row, not the course
                     _completedAt: e.completed_at,
                   };
 
