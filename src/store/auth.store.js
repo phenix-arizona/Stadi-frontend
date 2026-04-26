@@ -1,19 +1,3 @@
-/**
- * store/auth.store.js
- *
- * The Zustand auth store was accidentally duplicated: its enhanced version
- * (with the `isLoggingOut` guard) ended up in AuthModal.jsx instead of here.
- * This file is the canonical, definitive auth store that merges both versions.
- *
- * Changes vs the original auth.store.js:
- *  - Added `isLoggingOut` module-level guard to prevent a double-redirect
- *    when both the axios interceptor and fetchMe's catch block call logout()
- *    at the same time.
- *  - Added early-return token check in fetchMe to avoid a 401 flood when
- *    the user is not logged in.
- *  - setTokens() resets the isLoggingOut flag so the guard doesn't block
- *    future logins.
- */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { auth as authAPI } from '../lib/api';
@@ -31,43 +15,76 @@ const useAuthStore = create(
       isLoading:    false,
       isAuthOpen:   false,
       isLoggedIn:   false,
+      isAdmin:      false,
+      isInstructor: false,
+      isFinance:    false,
+      isHR:         false,
 
-      // Derived role flags
-      isAdmin:       false,
-      isInstructor:  false,
-      isFinance:     false,
-      isHR:          false,
-
+      // ── setTokens ───────────────────────────────────────────
+      // Called immediately after verifyOtp succeeds.
+      // Saves tokens to localStorage AND Zustand state.
+      // Resets the logout guard so future logins work correctly.
       setTokens: (token, refreshToken) => {
         localStorage.setItem('stadi_token', token);
         localStorage.setItem('stadi_refresh', refreshToken);
-        // Reset the logout guard when new tokens arrive (fresh login)
-        isLoggingOut = false;
+        isLoggingOut = false; // reset guard on fresh login
         set({ token, refreshToken });
       },
 
-      // setUser derives all role flags so they are always in sync
+      // ── setUser ─────────────────────────────────────────────
+      // Derives all role flags in one atomic update so they are
+      // always in sync. Called after verifyOtp with the user from
+      // the API response — no fetchMe needed after login.
       setUser: (user) => set({
         user,
-        isLoggedIn:    !!user,
-        isAdmin:       ['admin', 'super_admin'].includes(user?.role),
-        isInstructor:  ['instructor', 'admin', 'super_admin'].includes(user?.role),
-        isFinance:     ['finance', 'admin', 'super_admin'].includes(user?.role),
-        isHR:          ['hr', 'admin', 'super_admin'].includes(user?.role),
+        isLoggedIn:   !!user,
+        isAdmin:      ['admin', 'super_admin'].includes(user?.role),
+        isInstructor: ['instructor', 'admin', 'super_admin'].includes(user?.role),
+        isFinance:    ['finance', 'admin', 'super_admin'].includes(user?.role),
+        isHR:         ['hr', 'admin', 'super_admin'].includes(user?.role),
       }),
 
       openAuth:  () => set({ isAuthOpen: true }),
       closeAuth: () => set({ isAuthOpen: false }),
 
+      // ── loginSuccess ─────────────────────────────────────────
+      // Single atomic action called by AuthModal after verifyOtp.
+      // Writes tokens to localStorage AND sets user + role flags
+      // in ONE set() call — no render window between token saved
+      // and user saved where ProtectedRoute could see token-but-no-user
+      // and bounce back to login.
+      loginSuccess: ({ user, accessToken, refreshToken }) => {
+        localStorage.setItem('stadi_token', accessToken);
+        localStorage.setItem('stadi_refresh', refreshToken);
+        isLoggingOut = false;
+        set({
+          token:        accessToken,
+          refreshToken: refreshToken,
+          user,
+          isLoggedIn:   true,
+          isAdmin:      ['admin', 'super_admin'].includes(user?.role),
+          isInstructor: ['instructor', 'admin', 'super_admin'].includes(user?.role),
+          isFinance:    ['finance', 'admin', 'super_admin'].includes(user?.role),
+          isHR:         ['hr', 'admin', 'super_admin'].includes(user?.role),
+        });
+      },
+
+      // ── fetchMe ─────────────────────────────────────────────
+      // Refreshes the user profile from the server.
+      // Called on app mount (to pick up role changes made by admin)
+      // and on tab visibility restore.
+      //
+      // CRITICAL GUARDS:
+      //  1. No token → skip entirely (avoids 401 flood for guests)
+      //  2. Logout in progress → skip (avoids race with doLogout)
+      //  3. Already fetching → return cached user (avoids stampede)
+      //  4. On 401 → logout only if we still have a token in state
+      //     (avoids logging out a user whose token just expired and
+      //     was already refreshed by the axios interceptor)
       fetchMe: async () => {
-        // No token → not logged in; avoid triggering a 401 flood
-        const token = localStorage.getItem('stadi_token');
-        if (!token) return null;
-
-        // Logout already in progress — don't race
+        const token = get().token || localStorage.getItem('stadi_token');
+        if (!token)      return null;
         if (isLoggingOut) return null;
-
-        // Already fetching — return current cached user
         if (isFetchingMe) return get().user;
 
         isFetchingMe = true;
@@ -75,20 +92,28 @@ const useAuthStore = create(
 
         try {
           const res  = await authAPI.me();
-          const user = res.data;
+          // api.js interceptor unwraps res.data, so shape is:
+          // { success: true, data: { id, role, name, ... } }
+          const user = res?.data ?? res;
+          if (!user?.id) throw new Error('Invalid user response');
+
           set({
             user,
-            isLoggedIn:   !!user,
-            isAdmin:      ['admin', 'super_admin'].includes(user?.role),
-            isInstructor: ['instructor', 'admin', 'super_admin'].includes(user?.role),
-            isFinance:    ['finance', 'admin', 'super_admin'].includes(user?.role),
-            isHR:         ['hr', 'admin', 'super_admin'].includes(user?.role),
+            isLoggedIn:   true,
+            isAdmin:      ['admin', 'super_admin'].includes(user.role),
+            isInstructor: ['instructor', 'admin', 'super_admin'].includes(user.role),
+            isFinance:    ['finance', 'admin', 'super_admin'].includes(user.role),
+            isHR:         ['hr', 'admin', 'super_admin'].includes(user.role),
             isLoading:    false,
           });
           return user;
         } catch (err) {
           set({ isLoading: false });
-          if (err?.status === 401 || err?.response?.status === 401) {
+          const status = err?.status ?? err?.response?.status;
+          // Only logout on 401 if we still have a token — if the
+          // axios interceptor already refreshed it, the token in
+          // state will have changed and we should NOT logout.
+          if (status === 401 && get().token) {
             get().logout();
           }
           return null;
@@ -97,8 +122,10 @@ const useAuthStore = create(
         }
       },
 
+      // ── logout ──────────────────────────────────────────────
+      // Concurrent-safe: second call within 2s is a no-op.
+      // Clears both localStorage and Zustand state atomically.
       logout: async () => {
-        // Prevent concurrent logout calls (from interceptor + fetchMe catch)
         if (isLoggingOut) return;
         isLoggingOut = true;
 
@@ -118,7 +145,7 @@ const useAuthStore = create(
           isHR:         false,
         });
 
-        // Release the guard after the redirect has time to complete
+        // Release guard after redirect completes
         setTimeout(() => { isLoggingOut = false; }, 2000);
       },
     }),

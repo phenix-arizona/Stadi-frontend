@@ -1,17 +1,10 @@
 // src/components/auth/AuthModal.jsx
 //
-// ✅ BUG FIX: This file contained the content of auth.store.js (a Zustand
-//   store — "export default useAuthStore") instead of a React component.
-//   This caused a runtime crash: App.jsx does `<AuthModal />` but got a
-//   Zustand hook instead of a renderable component, throwing:
-//     "AuthModal is not a function" / "Objects are not valid as React children"
-//
-//   Root cause: the developer accidentally saved the updated auth.store.js
-//   content into this file path, overwriting the real modal.
-//
-//   Fix: restore the correct AuthModal component below, reconstructed from
-//   the store API, auth API calls, and UI primitives used elsewhere in the
-//   codebase. No behaviour has been changed beyond restoring the modal.
+// FIXED VERSION — uses the new atomic `loginSuccess()` helper from
+// auth.store.js so tokens + user + role flags + authReady all land in
+// one synchronous set() call. This eliminates the race where the page
+// behind the modal re-rendered between setTokens() and setUser(),
+// saw a token but no user, and bounced to login.
 
 import React, { useState, useRef } from 'react';
 import { Phone, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
@@ -23,7 +16,9 @@ import useAppStore  from '../../store/app.store';
 const STEP = { PHONE: 'phone', OTP: 'otp' };
 
 export default function AuthModal() {
-  const { isAuthOpen, closeAuth, setTokens, setUser, fetchMe } = useAuthStore();
+  // ⬇️ Pull the new `loginSuccess` action instead of setTokens/setUser.
+  //    Keep closeAuth for the modal close.
+  const { isAuthOpen, closeAuth, loginSuccess } = useAuthStore();
   const { addToast } = useAppStore();
 
   const [step,     setStep]     = useState(STEP.PHONE);
@@ -31,7 +26,7 @@ export default function AuthModal() {
   const [otp,      setOtp]      = useState('');
   const [loading,  setLoading]  = useState(false);
   const [err,      setErr]      = useState('');
-  const [isNew,    setIsNew]    = useState(false); // true when phone is freshly registered
+  const [isNew,    setIsNew]    = useState(false);
   const otpRef = useRef(null);
 
   function reset() {
@@ -61,26 +56,20 @@ export default function AuthModal() {
 
     setLoading(true);
     try {
-      // Always call /auth/register (registerOrLogin on the backend).
-      // That endpoint creates the user if they are new, then sends an OTP
-      // either way — no 404, no "register first" wall for new users.
-      // The old try-login-then-register pattern was the root cause of
-      // "No account found for this number" errors shown to new users.
+      // /auth/register acts as registerOrLogin — creates the user if new,
+      // sends an OTP either way.
       let devOtp = null;
       {
         const res = await authAPI.register(cleaned);
         devOtp = res?.data?.dev_otp;
-        // The backend returns is_new in the response when a fresh account is created
         if (res?.data?.is_new) setIsNew(true);
       }
 
       setStep(STEP.OTP);
-      // In dev the OTP is returned in the response; surface it for easy testing
       if (devOtp) {
         setOtp(devOtp);
         addToast(`Dev OTP: ${devOtp}`, 'info', 10000);
       }
-      // Focus OTP input on next paint
       setTimeout(() => otpRef.current?.focus(), 100);
     } catch (e) {
       setErr(e?.message || 'Could not send OTP. Please try again.');
@@ -103,16 +92,18 @@ export default function AuthModal() {
     setLoading(true);
     try {
       const res = await authAPI.verifyOtp(phone.trim(), code);
+      // Interceptor unwrapped once → res = { success, data: { user, accessToken, refreshToken } }
       const { accessToken, refreshToken, user } = res.data;
 
-      // BUG FIX: fetchMe() was called immediately after setTokens() but the
-      // axios instance may not have picked up the new token yet (it reads from
-      // localStorage on each request). If the /api/auth/me call returned 401,
-      // fetchMe's catch block called logout() — wiping the tokens we just saved
-      // and redirecting back to login. Since verifyOtp already returns the full
-      // user object, fetchMe is redundant here and has been removed.
-      setTokens(accessToken, refreshToken);
-      setUser(user);
+      if (!accessToken || !refreshToken || !user) {
+        throw new Error('Login response missing tokens or user.');
+      }
+
+      // 🔧 FIX: single atomic call. Writes tokens to localStorage AND
+      // sets user, role flags, and authReady=true in one set().
+      // No more window between "token saved" and "user saved" where
+      // the dashboard could see token-but-no-user and bounce to login.
+      loginSuccess({ user, accessToken, refreshToken });
 
       addToast(`Welcome${user?.name ? ', ' + user.name : ''}!`, 'success', 4000);
       handleClose();
@@ -127,7 +118,7 @@ export default function AuthModal() {
     setErr('');
     setLoading(true);
     try {
-      await authAPI.register(phone.trim()); // register = registerOrLogin, safe for all users
+      await authAPI.register(phone.trim());
       addToast('New code sent!', 'success', 3000);
     } catch {
       addToast('Could not resend. Please wait a moment.', 'error', 3000);

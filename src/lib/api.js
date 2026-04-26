@@ -9,17 +9,16 @@ const api = axios.create({
 // Endpoints that must never receive an Authorization header.
 // Sending a stale token to these causes a 401 → refresh → 401 death loop.
 const PUBLIC_ENDPOINTS = [
-  '/auth/register',
-  '/auth/login',
-  '/auth/verify-otp',
-  '/auth/refresh',
-  '/auth/forgot-password',
-  '/auth/reset-password',
+  '/auth/register', '/auth/login', '/auth/verify-otp',
+  '/auth/refresh',  '/auth/forgot-password', '/auth/reset-password',
 ];
-
 const isPublic = (url = '') => PUBLIC_ENDPOINTS.some((p) => url.includes(p));
 
-// Attach token on every request — except public auth endpoints
+// Routes where being logged-out actually matters. A 401 from a public
+// page must NOT redirect the user away.
+const PROTECTED_PATH_RE = /^\/(dashboard|admin|instructor|finance|hr|profile|settings|learn(\/|$))/;
+
+// Attach token on every request
 api.interceptors.request.use((config) => {
   if (!isPublic(config.url)) {
     const token = localStorage.getItem('stadi_token');
@@ -55,7 +54,7 @@ api.interceptors.response.use(
   async (err) => {
     const original = err.config;
 
-    if (err.response?.status === 401 && !original._retry && !isPublic(original.url)) {
+    if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
 
       const refresh = localStorage.getItem('stadi_refresh');
@@ -67,35 +66,18 @@ api.interceptors.response.use(
       }
 
       try {
-        // Reuse an in-flight refresh instead of firing a new one
+        // ✅ Reuse an in-flight refresh instead of firing a new one
         if (!refreshPromise) {
-          // BUG FIX: use the  instance (not raw axios) so the response
-          // interceptor unwraps res.data automatically. The old code used
-          // raw axios.post which returns the full axios response object, so
-          // res.data.data.accessToken was going one level too deep —
-          // returning undefined as the new token, which caused an immediate
-          // second 401 → doLogout() → redirect to login right after sign-in.
-          refreshPromise = api
-            .post('/auth/refresh', { refreshToken: refresh })
-            .finally(() => { refreshPromise = null; });
+          refreshPromise = axios
+            .post('/api/auth/refresh', { refreshToken: refresh })
+            .finally(() => { refreshPromise = null; }); // ✅ always release
         }
 
-        const refreshed = await refreshPromise;
-
-        // BUG FIX: api instance unwraps res.data, so the shape is:
-        //   refreshed = { success: true, data: { accessToken, refreshToken, expiresIn } }
-        // Not refreshed.data.data — just refreshed.data
-        const newToken = refreshed?.data?.accessToken || refreshed?.accessToken;
-
-        if (!newToken) {
-          // Refresh returned a response but no token — treat as failure
-          doLogout();
-          return Promise.reject(new Error('Refresh returned no token'));
-        }
-
+        const res = await refreshPromise;
+        const newToken = res.data.data.accessToken;
         localStorage.setItem('stadi_token', newToken);
 
-        // Also update the Zustand persisted token so the store stays in sync
+        // ✅ Also update the Zustand persisted token
         try {
           const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
           if (stored.state) {
@@ -107,7 +89,7 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
-        // Refresh failed — full logout, stop the loop
+        // ✅ Refresh failed — full logout, stop the loop
         doLogout();
         return Promise.reject(err.response?.data || err);
       }
@@ -122,7 +104,7 @@ export default api;
 // ── Auth ──────────────────────────────────────────────────────
 export const auth = {
   register:  (phone) => api.post('/auth/register', { phone }),
-  login:     (phone) => api.post('/auth/login', { phone }),
+  login:     (phone) => api.post('/auth/register', { phone }),  // FIX: was /auth/login — blocked new users
   verifyOtp: (phone, otp, referralCode) => api.post('/auth/verify-otp', { phone, otp, referralCode }),
   refresh:   (refreshToken) => api.post('/auth/refresh', { refreshToken }),
   logout:    () => api.post('/auth/logout'),

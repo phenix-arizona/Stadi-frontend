@@ -1,88 +1,48 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { useQuery }          from '@tanstack/react-query';
-import { Flame, Award, BookOpen, TrendingUp, Share2, ChevronRight, Gift, Bell, Clock, Check } from 'lucide-react';
-import { userAPI, streaks as streakAPI, certificates, referrals, bookmarks, notifications as notifAPI } from '../lib/api';
-import { Skeleton, ProgressBar, Badge, EmptyState, Button } from '../components/ui';
+import { Link }       from 'react-router-dom';
+import { useQuery }   from '@tanstack/react-query';
+import { Share2, ChevronRight, Gift } from 'lucide-react';
+import {
+  userAPI,
+  streaks as streakAPI,
+  certificates,
+  referrals,
+  progress as progressAPI,
+} from '../lib/api';
+import { Skeleton, EmptyState, Button } from '../components/ui';
 import useAuthStore from '../store/auth.store';
-import CourseCard from '../components/course/CourseCard';
+import CourseCard   from '../components/course/CourseCard';
 
 export default function DashboardPage() {
-  const {
-    user,
-    isAdmin, isInstructor, isFinance, isHR,
-    fetchMe,
-    authReady,     // ⬅️ NEW gate from auth.store.js
-    isLoggedIn,
-  } = useAuthStore();
+  const { user, isAdmin, isInstructor, isFinance, isHR } = useAuthStore();
 
-  const userIsAdmin      = typeof isAdmin      === 'function' ? isAdmin()      : isAdmin;
-  const userIsInstructor = typeof isInstructor === 'function' ? isInstructor() : isInstructor;
-  const userIsFinance    = typeof isFinance     === 'function' ? isFinance()     : isFinance;
-  const userIsHR         = typeof isHR          === 'function' ? isHR()          : isHR;
+  // Role flags are plain booleans in the store (set by setUser / fetchMe).
+  // Guard against the old pattern where they were accidentally stored as
+  // functions — this keeps the dashboard working across both versions.
+  const userIsAdmin      = typeof isAdmin      === 'function' ? isAdmin()      : !!isAdmin;
+  const userIsInstructor = typeof isInstructor === 'function' ? isInstructor() : !!isInstructor;
+  const userIsFinance    = typeof isFinance     === 'function' ? isFinance()    : !!isFinance;
+  const userIsHR         = typeof isHR          === 'function' ? isHR()         : !!isHR;
 
-  // Refresh user role from server on mount — but only AFTER the persist
-  // store has rehydrated, otherwise the request fires with no token,
-  // 401s, and the response interceptor logs us out → redirect loop.
-  React.useEffect(() => {
-    if (authReady && isLoggedIn) fetchMe();
-  }, [authReady, isLoggedIn]);
+  // FIX: Removed `React.useEffect(() => { fetchMe(); }, [])` from here.
+  //
+  // Calling fetchMe() inside the dashboard caused a race condition:
+  //   1. Dashboard mounts → fetchMe() fires
+  //   2. fetchMe() sets isLoading: true → isLoggedIn briefly flickers
+  //   3. ProtectedRoute (before the hydration fix) sees isLoggedIn=false
+  //   4. openAuth() fires → user kicked back to login
+  //
+  // fetchMe() is already called in App.jsx on mount (for the whole app),
+  // so calling it again here was redundant AND dangerous. Role changes
+  // made by admin are picked up by the App.jsx call — no need to repeat
+  // it per-page.
 
-  // 🔧 FIX: do not render or query anything until auth is ready.
-  // Without this gate the 6 queries below fire on first paint, race the
-  // token write from verifyOtp, and the first 401 triggers logout.
-  if (!authReady) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-2xl" />
-          ))}
-        </div>
-        <Skeleton className="h-40 rounded-2xl" />
-      </div>
-    );
-  }
-
-  // Auth ready but no session → bounce to home where AuthModal lives.
-  if (!isLoggedIn || !user) {
-    return <Navigate to="/?auth=required" replace />;
-  }
-
-  // ── Queries: gated on `authReady && isLoggedIn` so they never fire
-  //    before the token is in localStorage. ───────────────────────────
-  const queryEnabled = authReady && !!user;
-
-  const { data: statsData,  isLoading: statsLoading }  = useQuery({
-    queryKey: ['user','stats'],
-    queryFn: userAPI.stats,
-    enabled: queryEnabled,
-  });
-  const { data: contData } = useQuery({
-    queryKey: ['progress','continue'],
-    queryFn: () => import('../lib/api').then(m => m.progress.continuelearning()),
-    enabled: queryEnabled,
-  });
-  const { data: streakData } = useQuery({
-    queryKey: ['streak','my'],
-    queryFn: streakAPI.get,
-    enabled: queryEnabled,
-  });
-  const { data: enrollData, isLoading: enrollLoading } = useQuery({
-    queryKey: ['user','enrollments'],
-    queryFn: userAPI.enrollments,
-    enabled: queryEnabled,
-  });
-  const { data: certsData } = useQuery({
-    queryKey: ['certificates','my'],
-    queryFn: certificates.list,
-    enabled: queryEnabled,
-  });
-  const { data: refData } = useQuery({
-    queryKey: ['referral','my'],
-    queryFn: referrals.get,
-    enabled: queryEnabled,
-  });
+  const { data: statsData,  isLoading: statsLoading }  = useQuery({ queryKey: ['user', 'stats'],        queryFn: userAPI.stats });
+  const { data: contData }                              = useQuery({ queryKey: ['progress', 'continue'], queryFn: progressAPI.continuelearning });
+  const { data: streakData }                            = useQuery({ queryKey: ['streak', 'my'],         queryFn: streakAPI.get });
+  const { data: enrollData, isLoading: enrollLoading }  = useQuery({ queryKey: ['user', 'enrollments'], queryFn: userAPI.enrollments });
+  const { data: certsData }                             = useQuery({ queryKey: ['certificates', 'my'],   queryFn: certificates.list });
+  const { data: refData }                               = useQuery({ queryKey: ['referral', 'my'],       queryFn: referrals.get });
 
   const stats    = statsData?.data  || {};
   const streak   = streakData?.data || {};
@@ -154,7 +114,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Greeting */}
+      {/* ── Greeting ── */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-stadi-dark" style={{ fontFamily: 'Playfair Display' }}>
           Habari, {user?.name?.split(' ')[0] || 'Learner'}! 👋
@@ -162,14 +122,14 @@ export default function DashboardPage() {
         <p className="text-stadi-gray text-sm mt-1">Keep learning, keep earning.</p>
       </div>
 
-      {/* Stats row */}
+      {/* ── Stats row ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         {[
-          { icon:'📚', label:'Enrolled',     value: statsLoading ? '–' : stats.enrolled,                color:'stadi-green'  },
-          { icon:'✅', label:'Completed',    value: statsLoading ? '–' : stats.completed,               color:'stadi-green'  },
-          { icon:'🏆', label:'Certificates', value: statsLoading ? '–' : stats.certificates,            color:'stadi-orange' },
-          { icon:'🔥', label:'Day Streak',   value: statsLoading ? '–' : streak.current_streak  || 0,   color:'stadi-orange' },
-          { icon:'📅', label:'Days Learned', value: statsLoading ? '–' : streak.total_days_learned || 0, color:'stadi-green' },
+          { icon: '📚', label: 'Enrolled',     value: statsLoading ? '–' : stats.enrolled,                  color: 'stadi-green'  },
+          { icon: '✅', label: 'Completed',    value: statsLoading ? '–' : stats.completed,                 color: 'stadi-green'  },
+          { icon: '🏆', label: 'Certificates', value: statsLoading ? '–' : stats.certificates,              color: 'stadi-orange' },
+          { icon: '🔥', label: 'Day Streak',   value: statsLoading ? '–' : (streak.current_streak  || 0),   color: 'stadi-orange' },
+          { icon: '📅', label: 'Days Learned', value: statsLoading ? '–' : (streak.total_days_learned || 0), color: 'stadi-green' },
         ].map(s => (
           <div key={s.label} className="card p-4 text-center">
             <div className="text-2xl mb-1">{s.icon}</div>
@@ -182,7 +142,7 @@ export default function DashboardPage() {
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
 
-          {/* Continue learning */}
+          {/* ── Continue learning ── */}
           {cont && (
             <div className="card p-5 border-l-4 border-stadi-orange bg-stadi-orange-light/30">
               <div className="text-xs font-semibold text-stadi-orange uppercase tracking-wide mb-2">📖 Continue Learning</div>
@@ -194,7 +154,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* ── My Courses — card grid ── */}
+          {/* ── My Courses ── */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-stadi-dark">My Courses</h2>
@@ -231,12 +191,7 @@ export default function DashboardPage() {
                   const total    = e.courses?.total_lessons || 0;
                   const done     = e.lessons_done || 0;
                   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-
-                  const course = {
-                    ...e.courses,
-                    _completedAt: e.completed_at,
-                  };
-
+                  const course   = { ...e.courses, _completedAt: e.completed_at };
                   return (
                     <CourseCard
                       key={e.id}
@@ -250,7 +205,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Certificates */}
+          {/* ── Certificates ── */}
           {certs.length > 0 && (
             <div>
               <h2 className="text-lg font-bold text-stadi-dark mb-4">My Certificates</h2>
