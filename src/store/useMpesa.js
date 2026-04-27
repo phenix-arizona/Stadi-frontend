@@ -65,7 +65,21 @@ export function useMpesa({ onSuccess, invalidateKeys = [] } = {}) {
           addToast('Payment timed out. Please retry or check if funds were deducted.', 'error', 8000);
         }
 
-      } catch {
+      } catch (err) {
+        // Surface non-transient errors immediately instead of retrying 20 times
+        const status = err?.status ?? err?.response?.status;
+        if (status === 404 || status === 401 || status === 403) {
+          stopPolling();
+          setPaying(false);
+          addToast(
+            status === 404
+              ? 'Payment record not found. Please contact support.'
+              : 'Session expired. Please sign in and try again.',
+            'error', 8000
+          );
+          return;
+        }
+        // Transient network error — keep polling until max attempts
         if (attempts >= 20) {
           stopPolling();
           setPaying(false);

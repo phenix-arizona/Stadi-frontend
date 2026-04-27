@@ -38,7 +38,9 @@ const REFRESH_BEFORE_EXPIRY_MS =  2 * 60 * 1000; //  refresh token 2 min before 
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
 
 export function useSessionExpiry({ onWarning, onDismiss, onLogout }) {
-  const { token, refreshToken, logout, setToken } = useAuthStore();
+  // BUG FIX: auth.store exports `setTokens(token, refreshToken)`, not `setToken`.
+  // Also need `loginSuccess` to atomically update both tokens in state + localStorage.
+  const { token, refreshToken, logout, setTokens } = useAuthStore();
 
   const idleTimerRef    = useRef(null);
   const warningTimerRef = useRef(null);
@@ -70,19 +72,26 @@ export function useSessionExpiry({ onWarning, onDismiss, onLogout }) {
         body:    JSON.stringify({ refreshToken }),
       });
 
-      if (!res.ok) {
-        // Refresh token itself has expired — must re-login
-        return forceLogout('refresh_expired');
-      }
+      if (!res.ok) return forceLogout('refresh_expired');
 
-      const { accessToken, expiresIn } = await res.json();
-      setToken(accessToken);
-      scheduleRefresh(expiresIn); // reschedule for the new token
+      // BUG FIX: Backend wraps response in { success, data: { accessToken, refreshToken } }
+      // and does NOT return expiresIn — parse the JWT directly for the expiry.
+      const json = await res.json();
+      const { accessToken: newAccess, refreshToken: newRefresh } = json?.data ?? json;
+
+      if (!newAccess) return forceLogout('refresh_invalid_response');
+
+      // BUG FIX: Must persist the new refreshToken too — old code discarded it,
+      // meaning the next silent refresh would send an already-rotated (invalid) token.
+      setTokens(newAccess, newRefresh || refreshToken);
+
+      // Schedule next refresh based on the new token's exp claim
+      const secondsLeft = getTokenExpiresIn(newAccess);
+      if (secondsLeft > 0) scheduleRefresh(secondsLeft);
     } catch {
-      // Network error — don't log out immediately; they may be offline.
-      // The visibility handler will retry when they come back online.
+      // Network error — don't log out; retry on next visibility change
     }
-  }, [refreshToken, forceLogout, setToken]);
+  }, [refreshToken, forceLogout, setTokens]);
 
   // ── Schedule the next silent refresh ──────────────────────
   // expiresIn: seconds until the current access token expires

@@ -421,6 +421,8 @@ export function MobileBottomNav() {
   );
 }
 
+import { SessionWarningModal } from '../ui/SessionWarningModal';
+
 // ── Page Layout wrapper ────────────────────────────────────────
 export default function Layout({ children }) {
   return (
@@ -429,6 +431,8 @@ export default function Layout({ children }) {
       <main className="flex-1 pb-20 md:pb-0">{children}</main>
       <Footer />
       <MobileBottomNav />
+      {/* Session expiry warning — self-manages idle timeout + silent token refresh */}
+      <SessionWarningModal />
     </div>
   );
 }
