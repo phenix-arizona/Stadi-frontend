@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- ── Primary Meta ─────────────────────────────────────── -->
+    <!-- Primary Meta -->
     <title>Stadi — Learn Skills. Start Earning. In Your Language.</title>
     <meta name="description" content="Learn practical vocational skills in 15 Kenyan languages and start earning KES 15,000–40,000/month. Solar, phone repair, tailoring, agriculture and more. Pay via M-Pesa from KES 150." />
     <meta name="keywords" content="vocational training Kenya, learn skills Kenya, M-Pesa courses, online courses Kenya, solar installation Kenya, phone repair course, tailoring course Kenya, Swahili courses" />
@@ -12,7 +12,7 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://stadi.co.ke/" />
 
-    <!-- ── Open Graph / Facebook ────────────────────────────── -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://stadi.co.ke/" />
     <meta property="og:title" content="Stadi — Learn Skills. Start Earning. In Your Language." />
@@ -23,46 +23,45 @@
     <meta property="og:site_name" content="Stadi" />
     <meta property="og:locale" content="en_KE" />
 
-    <!-- ── Twitter Card ──────────────────────────────────────── -->
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://stadi.co.ke/" />
     <meta name="twitter:title" content="Stadi — Learn Skills. Start Earning." />
     <meta name="twitter:description" content="Practical vocational training in 15 Kenyan languages. Solar, phone repair, tailoring & more. From KES 150 via M-Pesa." />
     <meta name="twitter:image" content="https://stadi.co.ke/og-image.png" />
-
-    <!-- ── WhatsApp / iMessage preview ──────────────────────── -->
     <meta property="og:image:alt" content="Stadi — Learn Skills, Start Earning in Kenya" />
 
-    <!-- ── Favicon & App Icons ──────────────────────────────── -->
-    <!-- FIX: Only favicon.svg exists in public/. The png/ico/apple-touch references
-         were returning 404s causing the favicon to disappear. Using SVG covers all
-         modern browsers. The apple-touch-icon falls back to the SVG as well.
-         When PNG files are generated (via realfavicongenerator.net), restore them. -->
+    <!-- Favicon & App Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
+    <!--
+      FIX: Only add manifest link if /public/manifest.json actually exists.
+      A 404 on manifest.json logs a console error and breaks PWA install.
+      Verify the file exists before keeping this line.
+    -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#1a6b3c" />
     <meta name="msapplication-TileColor" content="#1a6b3c" />
 
-    <!-- ── PWA / Mobile ─────────────────────────────────────── -->
+    <!-- PWA / Mobile -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Stadi" />
     <meta name="application-name" content="Stadi" />
 
-    <!-- ── Geo targeting ────────────────────────────────────── -->
+    <!-- Geo -->
     <meta name="geo.region" content="KE" />
     <meta name="geo.placename" content="Kisumu, Kenya" />
 
-    <!-- ── Structured Data (JSON-LD) ────────────────────────── -->
+    <!-- Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "EducationalOrganization",
       "name": "Stadi Learning Platform",
       "url": "https://stadi.co.ke",
-      "logo": "https://stadi.co.ke/apple-touch-icon.png",
+      "logo": "https://stadi.co.ke/favicon.svg",
       "description": "Practical vocational training in 15 Kenyan languages. Learn skills, start earning.",
       "address": {
         "@type": "PostalAddress",
@@ -74,18 +73,15 @@
         "contactType": "customer support",
         "availableLanguage": ["English", "Swahili"]
       },
-      "sameAs": [
-        "https://wa.me/254701901244"
-      ]
+      "sameAs": ["https://wa.me/254701901244"]
     }
     </script>
 
-    <!-- ── Fonts ─────────────────────────────────────────────── -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet" />
 
-    <!-- ── Sitemap ───────────────────────────────────────────── -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
   </head>
   <body>
