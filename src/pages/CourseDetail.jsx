@@ -238,8 +238,19 @@ export function CourseDetailPage() {
       const res = await payments.initiate(course.id, phone);
       payId = res.data.paymentId;
     } catch (e) {
-      // Surface the exact Safaricom error if available
-      const msg = e?.message || e?.error || 'Could not reach M-Pesa. Check your connection and try again.';
+      // Sanitise raw infrastructure errors — never show internal strings like
+      // "Connection is closed" (Redis) or stack traces to the user.
+      const raw = e?.message || e?.error || '';
+      const isInfraError =
+        raw.includes('Connection is closed') ||
+        raw.includes("Stream isn't writeable") ||
+        raw.includes('ECONNREFUSED') ||
+        raw.includes('ECONNRESET') ||
+        raw.includes('socket') ||
+        raw.includes('redis');
+      const msg = isInfraError
+        ? 'Could not reach M-Pesa right now. Please try again in a moment.'
+        : raw || 'Could not reach M-Pesa. Check your connection and try again.';
       setMpesaState('failed');
       setMpesaError(msg);
       return;

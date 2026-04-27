@@ -80,7 +80,16 @@ export default function EnrollmentModal({ isOpen, onClose, course }) {
       setStep(STEPS.WAITING);
       startPolling(data.paymentId);
     } catch (e) {
-      const msg = e?.message || 'Failed to initiate payment. Try again.';
+      const raw = e?.message || 'Failed to initiate payment. Try again.';
+      const isInfraError =
+        raw.includes('Connection is closed') ||
+        raw.includes('ECONNREFUSED') ||
+        raw.includes('ECONNRESET') ||
+        raw.includes('socket') ||
+        raw.includes('redis');
+      const msg = isInfraError
+        ? 'Could not reach M-Pesa right now. Please try again in a moment.'
+        : raw;
       if (msg.includes('Already enrolled')) {
         addToast('You are already enrolled in this course!', 'info');
         navigate(`/learn/${course.id}`);
