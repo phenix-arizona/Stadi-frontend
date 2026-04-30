@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import useAuthStore from '../store/auth.store';
+import { requestTokenRefresh } from '../lib/api';
 
 // ============================================================
 // useSessionExpiry
@@ -66,18 +67,11 @@ export function useSessionExpiry({ onWarning, onDismiss, onLogout }) {
     if (!refreshToken) return forceLogout('no_refresh_token');
 
     try {
-      const res = await fetch('/api/auth/refresh', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ refreshToken }),
-      });
-
-      if (!res.ok) return forceLogout('refresh_expired');
+      const payload = await requestTokenRefresh(refreshToken);
 
       // BUG FIX: Backend wraps response in { success, data: { accessToken, refreshToken } }
       // and does NOT return expiresIn — parse the JWT directly for the expiry.
-      const json = await res.json();
-      const { accessToken: newAccess, refreshToken: newRefresh } = json?.data ?? json;
+      const { accessToken: newAccess, refreshToken: newRefresh } = payload?.data ?? payload;
 
       if (!newAccess) return forceLogout('refresh_invalid_response');
 
@@ -190,3 +184,4 @@ export function useSessionExpiry({ onWarning, onDismiss, onLogout }) {
 
   return { staySignedIn, warningDurationMs: WARNING_DURATION_MS };
 }
+

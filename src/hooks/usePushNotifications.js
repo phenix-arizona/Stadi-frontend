@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const PREFS_KEY = 'stadi_push_categories';
 
 async function getVapidKey() {
-  const res = await fetch(`${API_BASE}/api/push/vapid-public-key`);
+  const res = await fetch(`${API_BASE}/push/vapid-public-key`);
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data?.data?.publicKey) {
     throw new Error(data?.message || 'Failed to load push configuration');
@@ -76,7 +76,7 @@ export function usePushNotifications() {
       const nextSubscription = await getOrCreateSubscription(vapidKey);
       const nextCategories = selectedCategories.length ? selectedCategories : ['all'];
 
-      const res = await fetch(`${API_BASE}/api/push/subscribe`, {
+      const res = await fetch(`${API_BASE}/push/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,7 +101,7 @@ export function usePushNotifications() {
   const updateCategories = useCallback(async (nextCategories) => {
     if (!subscription) return false;
     try {
-      const res = await fetch(`${API_BASE}/api/push/preferences`, {
+      const res = await fetch(`${API_BASE}/push/preferences`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,7 +124,7 @@ export function usePushNotifications() {
     if (!subscription) return false;
     try {
       await subscription.unsubscribe();
-      await fetch(`${API_BASE}/api/push/unsubscribe`, {
+      await fetch(`${API_BASE}/push/unsubscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ endpoint: subscription.endpoint }),

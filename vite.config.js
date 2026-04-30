@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import { VitePWA } from 'vite-plugin-pwa'; // npm install vite-plugin-pwa
+
+const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   plugins: [
@@ -26,7 +29,7 @@ export default defineConfig({
       manifest: false, // Keep using your existing /public/manifest.json
     }),
   ],
-  resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+  resolve: { alias: { '@': path.resolve(rootDir, './src') } },
   server: {
     port: 5173,
     proxy: {

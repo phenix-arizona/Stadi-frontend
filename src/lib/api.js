@@ -5,7 +5,24 @@ const api = axios.create({
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
-
+const refreshClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api',
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+});
+function syncPersistedAuthTokens(token, refreshToken) {
+  try {
+    const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
+    if (!stored.state) return;
+    stored.state.token = token;
+    stored.state.refreshToken = refreshToken;
+    localStorage.setItem('stadi-auth', JSON.stringify(stored));
+  } catch {}
+}
+export async function requestTokenRefresh(refreshToken) {
+  const res = await refreshClient.post('/auth/refresh', { refreshToken });
+  return res.data;
+}
 // Endpoints that must never receive an Authorization header.
 // Sending a stale token to these causes a 401 → refresh → 401 death loop.
 const PUBLIC_ENDPOINTS = [
@@ -68,24 +85,19 @@ api.interceptors.response.use(
       try {
         // ✅ Reuse an in-flight refresh instead of firing a new one
         if (!refreshPromise) {
-          refreshPromise = axios
-            .post('/api/auth/refresh', { refreshToken: refresh })
+          refreshPromise = requestTokenRefresh(refresh)
             .finally(() => { refreshPromise = null; }); // ✅ always release
         }
 
-        const res = await refreshPromise;
-        const newToken = res.data.data.accessToken;
+        const refreshData = await refreshPromise;
+        const { accessToken: newToken, refreshToken: newRefresh } = refreshData?.data ?? refreshData;
+        if (!newToken) throw new Error('Token refresh response missing accessToken');
+
         localStorage.setItem('stadi_token', newToken);
+        localStorage.setItem('stadi_refresh', newRefresh || refresh);
+        syncPersistedAuthTokens(newToken, newRefresh || refresh);
 
-        // ✅ Also update the Zustand persisted token
-        try {
-          const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
-          if (stored.state) {
-            stored.state.token = newToken;
-            localStorage.setItem('stadi-auth', JSON.stringify(stored));
-          }
-        } catch {}
-
+        original.headers = original.headers || {};
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
@@ -277,3 +289,4 @@ export const careersAPI = {
 export const aiAPI = {
   chat: (messages) => api.post('/ai/chat', { messages }),
 };
+
