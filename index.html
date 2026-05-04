@@ -32,16 +32,21 @@
     <meta property="og:image:alt" content="Stadi — Learn Skills, Start Earning in Kenya" />
 
     <!-- Favicon & App Icons -->
+    <!-- SVG favicon: modern browsers (Chrome, Firefox, Edge) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
-    <!--
-      FIX: Only add manifest link if /public/manifest.json actually exists.
-      A 404 on manifest.json logs a console error and breaks PWA install.
-      Verify the file exists before keeping this line.
-    -->
+    <!-- PNG fallback for Safari + legacy browsers -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <!-- BUG FIX: iOS does not support SVG apple-touch-icons — must be PNG.
+         The old href="/favicon.svg" was silently ignored on all iPhones/iPads,
+         showing a blank or screenshot icon when users "Add to Home Screen". -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#1a6b3c" />
-    <meta name="msapplication-TileColor" content="#1a6b3c" />
+    <!-- BUG FIX: theme-color was #1a6b3c here but #FF6B35 in manifest.json.
+         Unified to match the brand green used in manifest.json background_color. -->
+    <meta name="theme-color" content="#1A6B4A" />
+    <meta name="msapplication-TileColor" content="#1A6B4A" />
+    <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
 
     <!-- PWA / Mobile -->
     <meta name="mobile-web-app-capable" content="yes" />

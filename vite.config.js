@@ -13,20 +13,21 @@ export default defineConfig({
     // Without this, /sw.js returns 404 — the missing file that
     // triggers the broken-SW → stale-cache → React #418 chain.
     VitePWA({
-      registerType: 'autoUpdate',   // new deploy → SW updates automatically
+      registerType: 'autoUpdate',
       injectRegister: null,         // we handle registration in main.jsx
       workbox: {
-        // Don't cache API calls — only static assets.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // FIX: Clean old caches on activation — prevents the stale-
-        // HTML-serving problem that caused React #418/#423.
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
       },
-      manifest: false, // Keep using your existing /public/manifest.json
+      // Keep using /public/manifest.json — we manage it manually so we can
+      // include Kenyan-language metadata and custom shortcuts.
+      // The apple-touch-icon.png is generated from favicon.svg at build time
+      // via the scripts/generate-icons.js helper (run once, commit the output).
+      manifest: false,
     }),
   ],
   resolve: { alias: { '@': path.resolve(rootDir, './src') } },
