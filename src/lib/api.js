@@ -3,13 +3,17 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 15000,
+  withCredentials: true,                          // FIX: send cookies/auth cross-origin
   headers: { 'Content-Type': 'application/json' },
 });
+
 const refreshClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 15000,
+  withCredentials: true,                          // FIX: needed for refresh cookie too
   headers: { 'Content-Type': 'application/json' },
 });
+
 function syncPersistedAuthTokens(token, refreshToken) {
   try {
     const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
@@ -19,20 +23,21 @@ function syncPersistedAuthTokens(token, refreshToken) {
     localStorage.setItem('stadi-auth', JSON.stringify(stored));
   } catch {}
 }
+
 export async function requestTokenRefresh(refreshToken) {
   const res = await refreshClient.post('/auth/refresh', { refreshToken });
   return res.data;
 }
+
 // Endpoints that must never receive an Authorization header.
-// Sending a stale token to these causes a 401 → refresh → 401 death loop.
 const PUBLIC_ENDPOINTS = [
   '/auth/register', '/auth/login', '/auth/verify-otp',
   '/auth/refresh',  '/auth/forgot-password', '/auth/reset-password',
 ];
 const isPublic = (url = '') => PUBLIC_ENDPOINTS.some((p) => url.includes(p));
 
-// Routes where being logged-out actually matters. A 401 from a public
-// page must NOT redirect the user away.
+// Only redirect to /login when the user is actually on a protected route.
+// A 401 on a public page must NOT bounce the user away.
 const PROTECTED_PATH_RE = /^\/(dashboard|admin|instructor|finance|hr|profile|settings|learn(\/|$))/;
 
 // Attach token on every request
@@ -44,14 +49,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ✅ Shared refresh promise — all concurrent 401s wait on the SAME refresh call
-// instead of each firing their own, which caused the request stampede
+// Shared refresh promise — all concurrent 401s wait on the SAME refresh call
 let refreshPromise = null;
 
 const doLogout = () => {
   localStorage.removeItem('stadi_token');
   localStorage.removeItem('stadi_refresh');
-  // ✅ Clear the Zustand persist store too, not just localStorage
   try {
     const stored = JSON.parse(localStorage.getItem('stadi-auth') || '{}');
     stored.state = {
@@ -62,7 +65,12 @@ const doLogout = () => {
     };
     localStorage.setItem('stadi-auth', JSON.stringify(stored));
   } catch {}
-  window.location.href = '/';
+
+  // FIX: only redirect to /login from protected routes — avoids bouncing
+  // users who hit a 401 on a public page (landing, courses listing, etc.)
+  if (PROTECTED_PATH_RE.test(window.location.pathname)) {
+    window.location.href = '/login';
+  }
 };
 
 // Auto-refresh on 401
@@ -76,17 +84,15 @@ api.interceptors.response.use(
 
       const refresh = localStorage.getItem('stadi_refresh');
 
-      // ✅ No refresh token at all — log out immediately, don't even try
       if (!refresh) {
         doLogout();
         return Promise.reject(err.response?.data || err);
       }
 
       try {
-        // ✅ Reuse an in-flight refresh instead of firing a new one
         if (!refreshPromise) {
           refreshPromise = requestTokenRefresh(refresh)
-            .finally(() => { refreshPromise = null; }); // ✅ always release
+            .finally(() => { refreshPromise = null; });
         }
 
         const refreshData = await refreshPromise;
@@ -101,7 +107,6 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
-        // ✅ Refresh failed — full logout, stop the loop
         doLogout();
         return Promise.reject(err.response?.data || err);
       }
@@ -116,7 +121,7 @@ export default api;
 // ── Auth ──────────────────────────────────────────────────────
 export const auth = {
   register:  (phone) => api.post('/auth/register', { phone }),
-  login:     (phone) => api.post('/auth/register', { phone }),  // FIX: was /auth/login — blocked new users
+  login:     (phone) => api.post('/auth/login', { phone }),  // FIX: was /auth/register — prevented login entirely
   verifyOtp: (phone, otp, referralCode) => api.post('/auth/verify-otp', { phone, otp, referralCode }),
   refresh:   (refreshToken) => api.post('/auth/refresh', { refreshToken }),
   logout:    () => api.post('/auth/logout'),
@@ -221,7 +226,6 @@ export const adminAPI = {
   setHR:         (id) => api.post(`/admin/users/${id}/set-hr`),
 };
 
-
 // ── Instructor ────────────────────────────────────────────────
 export const instructorAPI = {
   dashboard:      ()               => api.get('/instructor/dashboard'),
@@ -262,20 +266,20 @@ export const financeAPI = {
 
 // ── HR ────────────────────────────────────────────────────────
 export const hrAPI = {
-  summary:          () => api.get('/hr/summary'),
-  staff:            (params) => api.get('/hr/staff', { params }),
-  updateStaff:      (id, data) => api.patch(`/hr/staff/${id}`, data),
-  addStaff:         (data) => api.post('/hr/staff', data),
-  leave:            (params) => api.get('/hr/leave', { params }),
-  approveLeave:     (id) => api.post(`/hr/leave/${id}/approve`),
-  rejectLeave:      (id, reason) => api.post(`/hr/leave/${id}/reject`, { reason }),
-  requestLeave:     (data) => api.post('/hr/leave/request', data),
-  jobs:             () => api.get('/hr/jobs'),
-  createJob:        (data) => api.post('/hr/jobs', data),
-  updateJob:        (id, data) => api.patch(`/hr/jobs/${id}`, data),
-  closeJob:         (id) => api.delete(`/hr/jobs/${id}`),
-  applications:     (params) => api.get('/hr/applications', { params }),
-  updateApplication:(id, data) => api.patch(`/hr/applications/${id}`, data),
+  summary:           () => api.get('/hr/summary'),
+  staff:             (params) => api.get('/hr/staff', { params }),
+  updateStaff:       (id, data) => api.patch(`/hr/staff/${id}`, data),
+  addStaff:          (data) => api.post('/hr/staff', data),
+  leave:             (params) => api.get('/hr/leave', { params }),
+  approveLeave:      (id) => api.post(`/hr/leave/${id}/approve`),
+  rejectLeave:       (id, reason) => api.post(`/hr/leave/${id}/reject`, { reason }),
+  requestLeave:      (data) => api.post('/hr/leave/request', data),
+  jobs:              () => api.get('/hr/jobs'),
+  createJob:         (data) => api.post('/hr/jobs', data),
+  updateJob:         (id, data) => api.patch(`/hr/jobs/${id}`, data),
+  closeJob:          (id) => api.delete(`/hr/jobs/${id}`),
+  applications:      (params) => api.get('/hr/applications', { params }),
+  updateApplication: (id, data) => api.patch(`/hr/applications/${id}`, data),
 };
 
 // ── Careers (public) ──────────────────────────────────────────
@@ -285,8 +289,7 @@ export const careersAPI = {
   apply: (data) => api.post('/careers/apply', data),
 };
 
-// ── AI Chat (public) ─────────────────────────────────────────
+// ── AI Chat ───────────────────────────────────────────────────
 export const aiAPI = {
   chat: (messages) => api.post('/ai/chat', { messages }),
 };
-
