@@ -1,16 +1,35 @@
 import axios from 'axios';
 
+// ── DEPLOYMENT FIX ────────────────────────────────────────────
+// Always use a relative /api base so requests go through Vercel's
+// rewrite proxy (same-origin, no CORS). If VITE_API_BASE_URL is
+// accidentally set to a full URL in the dashboard, strip it so the
+// proxy rewrite still fires.
+function resolveBaseURL() {
+  const raw = import.meta.env.VITE_API_BASE_URL || '/api';
+  // If someone set the env var to a full URL (e.g. https://stadi-backend.vercel.app/api)
+  // strip the origin so we always use a relative path through the Vercel proxy.
+  try {
+    const parsed = new URL(raw);
+    return parsed.pathname; // → '/api'
+  } catch {
+    return raw; // already a relative path like '/api'
+  }
+}
+
+const BASE_URL = resolveBaseURL();
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: BASE_URL,
   timeout: 15000,
-  withCredentials: true,                          // FIX: send cookies/auth cross-origin
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
 const refreshClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: BASE_URL,
   timeout: 15000,
-  withCredentials: true,                          // FIX: needed for refresh cookie too
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -37,7 +56,6 @@ const PUBLIC_ENDPOINTS = [
 const isPublic = (url = '') => PUBLIC_ENDPOINTS.some((p) => url.includes(p));
 
 // Only redirect to /login when the user is actually on a protected route.
-// A 401 on a public page must NOT bounce the user away.
 const PROTECTED_PATH_RE = /^\/(dashboard|admin|instructor|finance|hr|profile|settings|learn(\/|$))/;
 
 // Attach token on every request
@@ -66,8 +84,6 @@ const doLogout = () => {
     localStorage.setItem('stadi-auth', JSON.stringify(stored));
   } catch {}
 
-  // FIX: only redirect to /login from protected routes — avoids bouncing
-  // users who hit a 401 on a public page (landing, courses listing, etc.)
   if (PROTECTED_PATH_RE.test(window.location.pathname)) {
     window.location.href = '/login';
   }
@@ -121,7 +137,7 @@ export default api;
 // ── Auth ──────────────────────────────────────────────────────
 export const auth = {
   register:  (phone) => api.post('/auth/register', { phone }),
-  login:     (phone) => api.post('/auth/login', { phone }),  // FIX: was /auth/register — prevented login entirely
+  login:     (phone) => api.post('/auth/login', { phone }),
   verifyOtp: (phone, otp, referralCode) => api.post('/auth/verify-otp', { phone, otp, referralCode }),
   refresh:   (refreshToken) => api.post('/auth/refresh', { refreshToken }),
   logout:    () => api.post('/auth/logout'),
