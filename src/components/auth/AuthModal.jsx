@@ -15,6 +15,16 @@ import useAppStore  from '../../store/app.store';
 
 const STEP = { PHONE: 'phone', OTP: 'otp' };
 
+function getErrorMessage(error, fallback) {
+  return (
+    error?.message ||
+    error?.userMessage ||
+    error?.data?.message ||
+    error?.response?.data?.message ||
+    fallback
+  );
+}
+
 export default function AuthModal() {
   // ⬇️ Pull the new `loginSuccess` action instead of setTokens/setUser.
   //    Keep closeAuth for the modal close.
@@ -72,7 +82,7 @@ export default function AuthModal() {
       }
       setTimeout(() => otpRef.current?.focus(), 100);
     } catch (e) {
-      setErr(e?.message || 'Could not send OTP. Please try again.');
+      setErr(getErrorMessage(e, 'Could not send OTP. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -108,7 +118,7 @@ export default function AuthModal() {
       addToast(`Welcome${user?.name ? ', ' + user.name : ''}!`, 'success', 4000);
       handleClose();
     } catch (e) {
-      setErr(e?.message || 'Incorrect or expired code. Please try again.');
+      setErr(getErrorMessage(e, 'Incorrect or expired code. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -120,8 +130,8 @@ export default function AuthModal() {
     try {
       await authAPI.register(phone.trim());
       addToast('New code sent!', 'success', 3000);
-    } catch {
-      addToast('Could not resend. Please wait a moment.', 'error', 3000);
+    } catch (e) {
+      addToast(getErrorMessage(e, 'Could not resend. Please wait a moment.'), 'error', 3000);
     } finally {
       setLoading(false);
     }
