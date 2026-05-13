@@ -16,39 +16,58 @@ const queryClient = new QueryClient({
   },
 });
 
-// FIX 1: Add try/catch + 3 s timeout to waitForHydration.
-// Without this, if localStorage is blocked by tracking prevention
-// (Edge/Safari ITP), onFinishHydration never fires and the app
-// renders a permanent blank page.
 function waitForHydration() {
   return new Promise((resolve) => {
     try {
-      if (useAuthStore.persist.hasHydrated()) {
-        resolve();
-        return;
-      }
-      // Safety timeout — if hydration hasn't finished in 3 s,
-      // render anyway with the default unauthenticated state.
+      if (useAuthStore.persist.hasHydrated()) { resolve(); return; }
       const timeout = setTimeout(resolve, 3000);
-
       const unsub = useAuthStore.persist.onFinishHydration(() => {
-        clearTimeout(timeout);
-        unsub();
-        resolve();
+        clearTimeout(timeout); unsub(); resolve();
       });
     } catch {
-      // localStorage threw (tracking prevention / private mode).
-      // Resolve immediately — Zustand will use its in-memory defaults.
       resolve();
     }
   });
 }
 
-// FIX 2: Unregister stale service workers before registering the
-// new one. This is the direct cause of React errors #418 and #423.
-// A stale SW from a previous deploy serves cached HTML with old
-// Vite chunk hashes. New React JS loads but can't reconcile against
-// the old DOM structure → hydration mismatch.
+// Feature 4: Provide auth token to service worker on request.
+// SW uses this to authenticate the offline-manifest and sync-batch requests.
+function registerTokenHandler() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'GET_TOKEN') {
+      const token = localStorage.getItem('stadi_token');
+      event.ports[0]?.postMessage({ token });
+    }
+  });
+}
+
+// Feature 4: Register /sw.js for offline support.
+// Guards with a HEAD check so a missing sw.js never installs a broken worker.
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const probe = await fetch('/sw.js', { method: 'HEAD' });
+    if (!probe.ok) return; // sw.js not present — skip silently
+
+    const reg = await navigator.serviceWorker.register('/sw.js');
+
+    // Notify the new SW to take over immediately on update
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker?.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+    });
+
+    console.info('[SW] Registered:', reg.scope);
+  } catch (err) {
+    console.error('[SW] Registration failed:', err);
+  }
+}
+
 async function clearStaleServiceWorkers() {
   if (!('serviceWorker' in navigator)) return;
   const registrations = await navigator.serviceWorker.getRegistrations();
@@ -56,8 +75,6 @@ async function clearStaleServiceWorkers() {
 }
 
 async function bootstrap() {
-  // Wipe stale SWs first, then hydrate, then render.
-  // Order matters — stale SW must be gone before React touches the DOM.
   await clearStaleServiceWorkers();
   await waitForHydration();
 
@@ -71,26 +88,11 @@ async function bootstrap() {
     </React.StrictMode>
   );
 
-  // FIX 3: Only register a SW if the file actually exists.
-  // /sw.js is currently returning 404 because vite.config.js has no
-  // PWA plugin configured to generate it. Registering a 404 SW
-  // installs a broken worker that intercepts requests and serves
-  // nothing. Guard with a HEAD check before registering.
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      try {
-        const probe = await fetch('/sw.js', { method: 'HEAD' });
-        if (!probe.ok) {
-          // sw.js doesn't exist yet — skip registration silently.
-          // Add vite-plugin-pwa to vite.config.js to generate it.
-          return;
-        }
-        await navigator.serviceWorker.register('/sw.js');
-      } catch (error) {
-        console.error('[PWA] service worker registration failed:', error);
-      }
-    });
-  }
+  // Register SW and token handler after React mounts
+  window.addEventListener('load', () => {
+    registerTokenHandler();
+    registerServiceWorker();
+  });
 }
 
 bootstrap();

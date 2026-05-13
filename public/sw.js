@@ -1,140 +1,190 @@
-const CACHE_NAME = 'stadi-v3'; // bumped: fixes navigation fetch handler
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg',           // FIX: was referencing missing .ico/.png files
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-];
+// public/sw.js — Feature 4: Offline Lesson Downloads
+// Registered in main.jsx on app boot
 
+const CACHE_VERSION  = 'stadi-v1';
+const MANIFEST_CACHE = 'stadi-manifests';
+const VIDEO_CACHE    = 'stadi-videos';
+const SYNC_TAG       = 'stadi-progress-sync';
+
+// ── Install: pre-cache app shell ─────────────────────────────
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_VERSION).then(cache =>
+      cache.addAll(['/', '/index.html', '/offline.html'])
+    ).then(() => self.skipWaiting())
+  );
 });
 
+// ── Activate: clear old caches ───────────────────────────────
 self.addEventListener('activate', (event) => {
-  event.waitUntil(Promise.all([
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))),
-    self.clients.claim(),
-  ]));
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(k => k !== CACHE_VERSION && k !== MANIFEST_CACHE && k !== VIDEO_CACHE)
+            .map(k => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
+// ── Fetch: cache-first for manifests, network-first for API ──
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // Pass through: non-GET, non-http, and all API calls — never cache these
-  if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) return;
-  if (url.pathname.startsWith('/api/')) return;
-
-  // FIX 1: Navigation requests (HTML page loads e.g. /teach, /courses, /instructor)
-  // must always fall back to /index.html so the React SPA can handle routing.
-  // Without this, a network failure on a page load returns an error instead of
-  // the app shell — causing the "Failed to fetch" error on the /teach route.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/index.html'))
-    );
+  // Offline manifests: cache-first with 3h revalidation
+  if (url.pathname.includes('/offline-manifest')) {
+    event.respondWith(cacheFirst(request, MANIFEST_CACHE, 3 * 60 * 60));
     return;
   }
 
-  // FIX 2: Static assets (JS chunks, CSS, images) — cache-first with network fallback.
-  // The original code had an unhandled rejection when networkFetch failed and there
-  // was no cached version (e.g. a new JS chunk after a deploy). Now we catch that
-  // and return a safe undefined rather than letting the promise reject uncaught.
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request)
-        .then((response) => {
-          // Only cache valid same-origin responses — never cache opaque responses
-          // from CDNs (status 0) as we cannot inspect them for errors
-          if (response.ok && response.type !== 'opaque') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached); // FIX 2: on network error, fall back to cache silently
-
-      return cached || networkFetch;
-    })
-  );
-});
-
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
-
-  let data = {};
-  try {
-    data = event.data.json();
-  } catch {
-    data = { title: 'Stadi', body: event.data.text() };
+  // Video chunks: cache-first (large files, long-lived)
+  if (url.hostname.includes('cloudinary') || url.hostname.includes('res.cloudinary')) {
+    event.respondWith(cacheFirst(request, VIDEO_CACHE, 7 * 24 * 60 * 60));
+    return;
   }
 
-  const options = {
-    body: data.body || 'You have a new update from Stadi.',
-    icon: data.icon || '/icons/icon-192x192.png',
-    badge: data.badge || '/icons/badge-72x72.png',
-    image: data.image || undefined,
-    data: data.data || { url: '/' },
-    actions: data.actions || [
-      { action: 'view', title: 'View Course' },
-      { action: 'dismiss', title: 'Dismiss' },
-    ],
-    vibrate: [100, 50, 100],
-    requireInteraction: false,
-    tag: `stadi-course-${data.data?.courseId || Date.now()}`,
-    renotify: true,
-  };
+  // Progress API: network-first, queue on failure
+  if (url.pathname.includes('/api/progress')) {
+    event.respondWith(networkFirstWithQueue(request));
+    return;
+  }
 
-  event.waitUntil(self.registration.showNotification(data.title || 'Stadi', options));
+  // Everything else: network-first, fall back to cache
+  event.respondWith(networkFirst(request));
 });
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  if (event.action === 'dismiss') return;
+async function cacheFirst(request, cacheName, maxAgeSeconds) {
+  const cache    = await caches.open(cacheName);
+  const cached   = await cache.match(request);
 
-  const targetUrl = event.notification.data?.url || '/courses';
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.focus();
-          client.navigate(targetUrl);
-          return;
-        }
+  if (cached) {
+    const fetchedAt = cached.headers.get('sw-fetched-at');
+    const age       = fetchedAt ? (Date.now() - parseInt(fetchedAt)) / 1000 : Infinity;
+    if (age < maxAgeSeconds) return cached;
+  }
+
+  try {
+    const response = await fetch(request.clone());
+    if (response.ok) {
+      const copy    = response.clone();
+      const headers = new Headers(copy.headers);
+      headers.set('sw-fetched-at', String(Date.now()));
+      const body = await copy.blob();
+      await cache.put(request, new Response(body, { status: copy.status, statusText: copy.statusText, headers }));
+    }
+    return response;
+  } catch {
+    return cached || new Response('Offline', { status: 503 });
+  }
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request.clone());
+    if (response.ok) {
+      const cache = await caches.open(CACHE_VERSION);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    return cached || new Response('Offline', { status: 503 });
+  }
+}
+
+// Queue failed progress saves for background sync
+const offlineQueue = [];
+
+async function networkFirstWithQueue(request) {
+  try {
+    return await fetch(request.clone());
+  } catch {
+    // Clone request body before it's consumed
+    const body = await request.clone().json().catch(() => null);
+    if (body) {
+      offlineQueue.push({ url: request.url, method: request.method, body });
+      // Register background sync if supported
+      if (self.registration.sync) {
+        await self.registration.sync.register(SYNC_TAG).catch(() => {});
       }
-      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
-    })
-  );
+    }
+    return new Response(JSON.stringify({ success: true, queued: true }), {
+      status: 202,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+// ── Background sync: flush queued progress ───────────────────
+self.addEventListener('sync', (event) => {
+  if (event.tag === SYNC_TAG) {
+    event.waitUntil(flushQueue());
+  }
 });
 
-self.addEventListener('pushsubscriptionchange', (event) => {
-  event.waitUntil((async () => {
-    let publicKey;
+async function flushQueue() {
+  const toRetry = [...offlineQueue];
+  offlineQueue.length = 0;
+
+  for (const item of toRetry) {
     try {
-      const res = await fetch('/api/push/vapid-public-key');
-      const body = await res.json();
-      publicKey = body?.data?.publicKey;
-      if (!publicKey) return;
+      const token = await getAuthToken();
+      await fetch('/api/progress/sync-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ records: Array.isArray(item.body) ? item.body : [item.body] }),
+      });
     } catch {
-      return;
+      offlineQueue.push(item); // re-queue if still offline
+    }
+  }
+}
+
+// Read token from localStorage (accessible in SW via client messaging)
+async function getAuthToken() {
+  const clients = await self.clients.matchAll({ type: 'window' });
+  return new Promise((resolve) => {
+    if (!clients.length) return resolve(null);
+    const mc = new MessageChannel();
+    mc.port1.onmessage = (e) => resolve(e.data?.token || null);
+    clients[0].postMessage({ type: 'GET_TOKEN' }, [mc.port2]);
+    setTimeout(() => resolve(null), 1000);
+  });
+}
+
+// ── Message handler ───────────────────────────────────────────
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data?.type === 'FLUSH_QUEUE')  flushQueue();
+  if (event.data?.type === 'CACHE_LESSON') cacheLessonManifest(event.data.courseId);
+});
+
+async function cacheLessonManifest(courseId) {
+  if (!courseId) return;
+  try {
+    const token   = await getAuthToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res     = await fetch(`/api/courses/${courseId}/offline-manifest`, { headers });
+    if (!res.ok) return;
+
+    const manifest = await res.json();
+    const cache    = await caches.open(VIDEO_CACHE);
+
+    // Cache each video URL from manifest
+    for (const lesson of (manifest?.data?.lessons || [])) {
+      const videoUrl = lesson.videoUrl;
+      if (!videoUrl) continue;
+      try {
+        const vRes = await fetch(videoUrl);
+        if (vRes.ok) await cache.put(videoUrl, vRes);
+      } catch { /* skip individual failures */ }
     }
 
-    const padding = '='.repeat((4 - (publicKey.length % 4)) % 4);
-    const base64 = (publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    const applicationServerKey = Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
-
-    const newSubscription = await self.registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey,
-    });
-
-    await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscription: newSubscription }),
-    });
-  })());
-});
+    // Cache manifest itself
+    const mCache = await caches.open(MANIFEST_CACHE);
+    await mCache.put(`/api/courses/${courseId}/offline-manifest`, res.clone?.() || new Response(JSON.stringify(manifest)));
+  } catch (err) {
+    console.error('[SW] Cache lesson error:', err);
+  }
+}

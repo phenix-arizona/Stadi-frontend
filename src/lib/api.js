@@ -1,19 +1,12 @@
 import axios from 'axios';
 
-// ── DEPLOYMENT FIX ────────────────────────────────────────────
-// Always use a relative /api base so requests go through Vercel's
-// rewrite proxy (same-origin, no CORS). If VITE_API_BASE_URL is
-// accidentally set to a full URL in the dashboard, strip it so the
-// proxy rewrite still fires.
 function resolveBaseURL() {
   const raw = import.meta.env.VITE_API_BASE_URL || '/api';
-  // If someone set the env var to a full URL (e.g. https://stadi-backend.vercel.app/api)
-  // strip the origin so we always use a relative path through the Vercel proxy.
   try {
     const parsed = new URL(raw);
-    return parsed.pathname; // → '/api'
+    return parsed.pathname;
   } catch {
-    return raw; // already a relative path like '/api'
+    return raw;
   }
 }
 
@@ -48,17 +41,13 @@ export async function requestTokenRefresh(refreshToken) {
   return res.data;
 }
 
-// Endpoints that must never receive an Authorization header.
 const PUBLIC_ENDPOINTS = [
   '/auth/register', '/auth/login', '/auth/verify-otp',
-  '/auth/refresh',  '/auth/forgot-password', '/auth/reset-password',
+  '/auth/refresh', '/auth/forgot-password', '/auth/reset-password',
 ];
 const isPublic = (url = '') => PUBLIC_ENDPOINTS.some((p) => url.includes(p));
-
-// Only redirect to /login when the user is actually on a protected route.
 const PROTECTED_PATH_RE = /^\/(dashboard|admin|instructor|finance|hr|profile|settings|learn(\/|$))/;
 
-// Attach token on every request
 api.interceptors.request.use((config) => {
   if (!isPublic(config.url)) {
     const token = localStorage.getItem('stadi_token');
@@ -67,7 +56,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Shared refresh promise — all concurrent 401s wait on the SAME refresh call
 let refreshPromise = null;
 
 const doLogout = () => {
@@ -83,42 +71,29 @@ const doLogout = () => {
     };
     localStorage.setItem('stadi-auth', JSON.stringify(stored));
   } catch {}
-
   if (PROTECTED_PATH_RE.test(window.location.pathname)) {
     window.location.href = '/login';
   }
 };
 
-// Auto-refresh on 401
 api.interceptors.response.use(
   (res) => res.data,
   async (err) => {
     const original = err.config;
-
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
-
       const refresh = localStorage.getItem('stadi_refresh');
-
-      if (!refresh) {
-        doLogout();
-        return Promise.reject(err.response?.data || err);
-      }
-
+      if (!refresh) { doLogout(); return Promise.reject(err.response?.data || err); }
       try {
         if (!refreshPromise) {
-          refreshPromise = requestTokenRefresh(refresh)
-            .finally(() => { refreshPromise = null; });
+          refreshPromise = requestTokenRefresh(refresh).finally(() => { refreshPromise = null; });
         }
-
         const refreshData = await refreshPromise;
         const { accessToken: newToken, refreshToken: newRefresh } = refreshData?.data ?? refreshData;
         if (!newToken) throw new Error('Token refresh response missing accessToken');
-
         localStorage.setItem('stadi_token', newToken);
         localStorage.setItem('stadi_refresh', newRefresh || refresh);
         syncPersistedAuthTokens(newToken, newRefresh || refresh);
-
         original.headers = original.headers || {};
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
@@ -127,7 +102,6 @@ api.interceptors.response.use(
         return Promise.reject(err.response?.data || err);
       }
     }
-
     return Promise.reject(err.response?.data || err);
   }
 );
@@ -154,22 +128,29 @@ export const courses = {
   categories:      () => api.get('/courses/categories'),
   create:          (data) => api.post('/courses', data),
   update:          (id, data) => api.patch(`/courses/${id}`, data),
+  // Feature 4: offline manifest for SW caching
+  offlineManifest: (courseId) => api.get(`/courses/${courseId}/offline-manifest`),
 };
 
 // ── Payments ──────────────────────────────────────────────────
 export const payments = {
-  initiate: (courseId, phone) => api.post('/payments/initiate', { courseId, phone }),
-  retry:    (paymentId)       => api.post(`/payments/retry/${paymentId}`),
-  poll:     (id)              => api.get(`/payments/poll/${id}`),
-  status:   (id)              => api.get(`/payments/status/${id}`),
-  history:  ()                => api.get('/payments/my'),
+  initiate:       (courseId, phone)           => api.post('/payments/initiate', { courseId, phone }),
+  retry:          (paymentId)                 => api.post(`/payments/retry/${paymentId}`),
+  poll:           (id)                        => api.get(`/payments/poll/${id}`),
+  status:         (id)                        => api.get(`/payments/status/${id}`),
+  history:        ()                          => api.get('/payments/my'),
+  // Feature 3: module payments
+  initiateModule: (courseId, moduleId, phone) => api.post('/payments/initiate-module', { courseId, moduleId, phone }),
+  moduleAccess:   (courseId)                  => api.get(`/payments/module-access/${courseId}`),
 };
 
 // ── Progress ──────────────────────────────────────────────────
 export const progress = {
-  mark:             (lessonId, data) => api.post(`/progress/${lessonId}`, data),
-  byCourse:         (courseId) => api.get(`/progress/course/${courseId}`),
-  continuelearning: () => api.get('/progress/continue'),
+  mark:           (lessonId, data) => api.post(`/progress/${lessonId}`, data),
+  byCourse:       (courseId)       => api.get(`/progress/course/${courseId}`),
+  continuelearning: ()             => api.get('/progress/continue'),
+  // Feature 4: sync offline progress batch
+  syncBatch:      (records)        => api.post('/progress/sync-batch', { records }),
 };
 
 // ── Assessments ───────────────────────────────────────────────
@@ -227,19 +208,23 @@ export const payouts = {
 
 // ── Admin ─────────────────────────────────────────────────────
 export const adminAPI = {
-  stats:         () => api.get('/admin/stats'),
-  users:         (params) => api.get('/admin/users', { params }),
-  updateUser:    (id, data) => api.patch(`/admin/users/${id}`, data),
-  courses:       (params) => api.get('/admin/courses', { params }),
-  updateCourse:  (id, data) => api.patch(`/admin/courses/${id}`, data),
-  payments:      (params) => api.get('/admin/payments', { params }),
-  refund:        (id, reason) => api.post(`/admin/payments/${id}/refund`, { reason }),
-  payouts:       (params) => api.get('/admin/payouts', { params }),
-  approvePayout: (id) => api.post(`/payouts/${id}/approve`),
-  auditLog:      () => api.get('/admin/audit-log'),
-  setInstructor: (data) => api.post('/admin/users/set-instructor', data),
-  setFinance:    (id) => api.post(`/admin/users/${id}/set-finance`),
-  setHR:         (id) => api.post(`/admin/users/${id}/set-hr`),
+  stats:          () => api.get('/admin/stats'),
+  users:          (params) => api.get('/admin/users', { params }),
+  updateUser:     (id, data) => api.patch(`/admin/users/${id}`, data),
+  courses:        (params) => api.get('/admin/courses', { params }),
+  updateCourse:   (id, data) => api.patch(`/admin/courses/${id}`, data),
+  payments:       (params) => api.get('/admin/payments', { params }),
+  refund:         (id, reason) => api.post(`/admin/payments/${id}/refund`, { reason }),
+  payouts:        (params) => api.get('/admin/payouts', { params }),
+  approvePayout:  (id) => api.post(`/payouts/${id}/approve`),
+  auditLog:       () => api.get('/admin/audit-log'),
+  setInstructor:  (data) => api.post('/admin/users/set-instructor', data),
+  setFinance:     (id) => api.post(`/admin/users/${id}/set-finance`),
+  setHR:          (id) => api.post(`/admin/users/${id}/set-hr`),
+  // Feature 8: employer role
+  setEmployer:    (id) => api.post(`/admin/users/${id}/set-employer`),
+  // Feature 10: CRM dashboard
+  crm:            () => api.get('/admin/crm'),
 };
 
 // ── Instructor ────────────────────────────────────────────────
@@ -307,5 +292,46 @@ export const careersAPI = {
 
 // ── AI Chat ───────────────────────────────────────────────────
 export const aiAPI = {
-  chat: (messages) => api.post('/ai/chat', { messages }),
+  // Feature 6: courseId optional — scopes AI to course content when provided
+  chat: (messages, courseId) => api.post('/ai/chat', { messages, courseId }),
+};
+
+// ── Feature 1: Abandoned enrolment tracking ───────────────────
+export const abandonedAPI = {
+  track: (courseId, step, paymentId) =>
+    api.post('/abandoned/track', { courseId, step, paymentId }),
+};
+
+// ── Feature 5: Assignments + Portfolio ───────────────────────
+export const assignmentsAPI = {
+  list:      (courseId)            => api.get(`/assignments/${courseId}`),
+  submit:    (id, data)            => api.post(`/assignments/${id}/submit`, data),
+  feedback:  (submissionId, data)  => api.patch(`/assignments/submissions/${submissionId}`, data),
+  portfolio: (userId)              => api.get(`/assignments/portfolio/${userId}`),
+  create:    (data)                => api.post('/assignments', data),
+};
+
+// ── Feature 7: Cohort groups ──────────────────────────────────
+export const cohortsAPI = {
+  my:          ()        => api.get('/cohorts/my'),
+  leaderboard: (groupId) => api.get(`/cohorts/${groupId}/leaderboard`),
+  members:     (groupId) => api.get(`/cohorts/${groupId}/members`),
+};
+
+// ── Feature 8: Job listings ───────────────────────────────────
+export const jobsAPI = {
+  list:           (params) => api.get('/jobs', { params }),
+  get:            (id)     => api.get(`/jobs/${id}`),
+  apply:          (id, data) => api.post(`/jobs/${id}/apply`, data),
+  myApplications: ()       => api.get('/jobs/my/applications'),
+  create:         (data)   => api.post('/jobs', data),
+  updateApp:      (id, data) => api.patch(`/jobs/applications/${id}`, data),
+};
+
+// ── Feature 9: Learning Paths ─────────────────────────────────
+export const pathsAPI = {
+  list:   ()             => api.get('/paths'),
+  get:    (slug)         => api.get(`/paths/${slug}`),
+  enrol:  (slug, phone)  => api.post(`/paths/${slug}/enrol`, { phone }),
+  create: (data)         => api.post('/paths', data),
 };
